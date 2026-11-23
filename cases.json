@@ -3095,6 +3095,672 @@
     ],
     "teaching": "「朝だけ」は時刻のパターンが最大の手がかり。プールの使用率だけでなく、リースの中身（誰が掴んだままか）まで見る。"
    }
+  },
+  {
+   "id": "case19",
+   "level": 7,
+   "title": "隣の会社に届かない",
+   "budget": 6,
+   "symptom": "特定の取引先のシステムにだけ届かない。他の外部サイトは正常。境界ルータは BGP で経路交換している。",
+   "topology": {
+    "nodes": [
+     {
+      "id": "PC1",
+      "x": 10,
+      "y": 30
+     },
+     {
+      "id": "SW1",
+      "x": 28,
+      "y": 30
+     },
+     {
+      "id": "R1",
+      "x": 48,
+      "y": 30
+     },
+     {
+      "id": "ISP",
+      "x": 70,
+      "y": 30
+     },
+     {
+      "id": "EXT1",
+      "x": 90,
+      "y": 30
+     }
+    ],
+    "edges": [
+     [
+      "PC1",
+      "SW1"
+     ],
+     [
+      "SW1",
+      "R1"
+     ],
+     [
+      "R1",
+      "ISP"
+     ],
+     [
+      "ISP",
+      "EXT1"
+     ]
+    ]
+   },
+   "candidates": [
+    {
+     "id": "c19_1",
+     "label": "BGP のプレフィックスフィルタが取引先の経路を拒否",
+     "answer": true
+    },
+    {
+     "id": "c19_2",
+     "label": "BGP ネイバー断絶（セッション断）"
+    },
+    {
+     "id": "c19_3",
+     "label": "取引先側の障害"
+    },
+    {
+     "id": "c19_4",
+     "label": "DNS 障害（取引先の名前だけ引けない）"
+    },
+    {
+     "id": "c19_5",
+     "label": "ISP 側の経路障害"
+    }
+   ],
+   "observations": [
+    {
+     "id": "aa1",
+     "tool": "dns",
+     "label": "DNS クエリ（取引先の名前）",
+     "cost": 1,
+     "results": {
+      "c19_1": "OK",
+      "c19_2": "OK",
+      "c19_3": "OK",
+      "c19_4": "FAIL",
+      "c19_5": "OK"
+     },
+     "display": "正常に引ける"
+    },
+    {
+     "id": "aa2",
+     "tool": "ping",
+     "label": "ping PC1→EXT1（IP 直指定）",
+     "cost": 1,
+     "results": {
+      "c19_1": "FAIL",
+      "c19_2": "FAIL",
+      "c19_3": "FAIL",
+      "c19_4": "OK",
+      "c19_5": "FAIL"
+     },
+     "display": "応答なし"
+    },
+    {
+     "id": "aa3",
+     "tool": "traceroute",
+     "label": "traceroute PC1→EXT1",
+     "cost": 1,
+     "results": {
+      "c19_1": "STOP_R1",
+      "c19_2": "STOP_R1",
+      "c19_3": "REACH_NEAR",
+      "c19_4": "ARRIVE",
+      "c19_5": "NO_REPLY"
+     },
+     "display": "R1 で停止（経路なし）"
+    },
+    {
+     "id": "aa4",
+     "tool": "snmp",
+     "label": "SNMP R1（BGP ネイバー状態）",
+     "cost": 1,
+     "results": {
+      "c19_1": "ESTABLISHED",
+      "c19_2": "DOWN",
+      "c19_3": "ESTABLISHED",
+      "c19_4": "ESTABLISHED",
+      "c19_5": "ESTABLISHED"
+     },
+     "display": "BGP ネイバーは Established"
+    },
+    {
+     "id": "aa5",
+     "tool": "snmp",
+     "label": "SNMP R1（BGP テーブル）",
+     "cost": 1,
+     "results": {
+      "c19_1": "MISSING",
+      "c19_2": "MISSING",
+      "c19_3": "PRESENT",
+      "c19_4": "PRESENT",
+      "c19_5": "PRESENT"
+     },
+     "display": "取引先のプレフィックスだけが BGP テーブルにない"
+    },
+    {
+     "id": "aa6",
+     "tool": "log",
+     "label": "R1 ログ（BGP）",
+     "cost": 2,
+     "results": {
+      "c19_1": "NONE",
+      "c19_2": "SESSION_DOWN",
+      "c19_3": "NONE",
+      "c19_4": "NONE",
+      "c19_5": "NONE"
+     },
+     "display": "該当ログなし"
+    }
+   ],
+   "optimal": [
+    "aa4",
+    "aa5"
+   ],
+   "explanation": {
+    "evidence_chain": [
+     "aa3: 停止点は自社の境界 R1 ＝ 相手や回線ではなく、自社の経路の問題",
+     "aa4: ネイバーは Established で生きている ＝ 全滅ではなくピンポイントの欠落",
+     "aa5: 欠けているのは取引先のプレフィックスだけ。受信フィルタがその経路を拒否していた"
+    ],
+    "teaching": "BGP では「セッションが生きている」と「経路がある」は別。1件だけ欠ける場合はフィルタを疑う。"
+   }
+  },
+  {
+   "id": "case20",
+   "level": 7,
+   "title": "切り替わらない夜",
+   "budget": 6,
+   "symptom": "深夜、メインのルータが故障したのにネットワークが復旧しない。冗長化していたはずだった。他の機器は正常。",
+   "topology": {
+    "nodes": [
+     {
+      "id": "PC1",
+      "x": 10,
+      "y": 30
+     },
+     {
+      "id": "SW1",
+      "x": 30,
+      "y": 30
+     },
+     {
+      "id": "R1",
+      "x": 56,
+      "y": 16
+     },
+     {
+      "id": "R2",
+      "x": 56,
+      "y": 46
+     },
+     {
+      "id": "SRV1",
+      "x": 84,
+      "y": 30
+     }
+    ],
+    "edges": [
+     [
+      "PC1",
+      "SW1"
+     ],
+     [
+      "SW1",
+      "R1"
+     ],
+     [
+      "SW1",
+      "R2"
+     ],
+     [
+      "R1",
+      "SRV1"
+     ],
+     [
+      "R2",
+      "SRV1"
+     ]
+    ]
+   },
+   "candidates": [
+    {
+     "id": "c20_1",
+     "label": "R2 の仮想IP設定漏れ（マスターを引き継げない）",
+     "answer": true
+    },
+    {
+     "id": "c20_2",
+     "label": "SW1 の障害（R1 向けポートの異常）"
+    },
+    {
+     "id": "c20_3",
+     "label": "R2 自体の故障"
+    },
+    {
+     "id": "c20_4",
+     "label": "端末の ARP 問題（古いゲートウェイ情報を保持）"
+    },
+    {
+     "id": "c20_5",
+     "label": "SRV1 側の経路問題"
+    }
+   ],
+   "observations": [
+    {
+     "id": "ab1",
+     "tool": "ping",
+     "label": "ping PC1→仮想IP（ゲートウェイ）",
+     "cost": 1,
+     "results": {
+      "c20_1": "FAIL",
+      "c20_2": "FAIL",
+      "c20_3": "FAIL",
+      "c20_4": "FAIL",
+      "c20_5": "OK"
+     },
+     "display": "応答なし"
+    },
+    {
+     "id": "ab2",
+     "tool": "ping",
+     "label": "ping PC1→R2（実IP）",
+     "cost": 1,
+     "results": {
+      "c20_1": "OK",
+      "c20_2": "OK",
+      "c20_3": "FAIL",
+      "c20_4": "OK",
+      "c20_5": "OK"
+     },
+     "display": "R2 自体は応答する"
+    },
+    {
+     "id": "ab3",
+     "tool": "snmp",
+     "label": "SNMP R2（VRRP 状態）",
+     "cost": 1,
+     "results": {
+      "c20_1": "NO_VIP",
+      "c20_2": "MASTER",
+      "c20_3": "NO_VIP",
+      "c20_4": "MASTER",
+      "c20_5": "MASTER"
+     },
+     "display": "R2 はバックアップのままで、仮想IPを持っていない"
+    },
+    {
+     "id": "ab4",
+     "tool": "snmp",
+     "label": "端末の ARP 確認（PC1）",
+     "cost": 1,
+     "results": {
+      "c20_1": "NORMAL",
+      "c20_2": "NORMAL",
+      "c20_3": "NORMAL",
+      "c20_4": "STALE_ARP",
+      "c20_5": "NORMAL"
+     },
+     "display": "ARP は正常"
+    },
+    {
+     "id": "ab5",
+     "tool": "snmp",
+     "label": "SNMP SW1（ポート状態）",
+     "cost": 1,
+     "results": {
+      "c20_1": "NORMAL",
+      "c20_2": "LINK_ERR",
+      "c20_3": "NORMAL",
+      "c20_4": "NORMAL",
+      "c20_5": "NORMAL"
+     },
+     "display": "SW1 のポートは正常"
+    },
+    {
+     "id": "ab6",
+     "tool": "log",
+     "label": "R2 ログ（VRRP）",
+     "cost": 2,
+     "results": {
+      "c20_1": "CONFIG_WARN",
+      "c20_2": "NONE",
+      "c20_3": "NONE",
+      "c20_4": "NONE",
+      "c20_5": "NONE"
+     },
+     "display": "R2 に仮想IPの設定がない旨の警告"
+    }
+   ],
+   "optimal": [
+    "ab2",
+    "ab3"
+   ],
+   "explanation": {
+    "evidence_chain": [
+     "ab2: バックアップ機 R2 自体は生きている ＝ 機器の故障ではない",
+     "ab3: それでも仮想IPを持っていない ＝ 引き継ぐ側の設定が欠けている",
+     "ab6: 仮想IPの設定がない旨の警告が残っていた"
+    ],
+    "teaching": "冗長化は「機器が2台ある」ことではなく「引き継ぐ設定が揃っている」ことで成立する。切り替わらないときは、生きている側を見る。"
+   }
+  },
+  {
+   "id": "case21",
+   "level": 4,
+   "title": "夕方だけ遅い",
+   "budget": 5,
+   "symptom": "夕方（17時台）だけ社内システムが遅い。朝と昼は正常。時間帯で再現する。",
+   "topology": {
+    "nodes": [
+     {
+      "id": "PC1",
+      "x": 12,
+      "y": 30
+     },
+     {
+      "id": "SW1",
+      "x": 32,
+      "y": 30
+     },
+     {
+      "id": "R1",
+      "x": 54,
+      "y": 30
+     },
+     {
+      "id": "SRV1",
+      "x": 80,
+      "y": 30
+     }
+    ],
+    "edges": [
+     [
+      "PC1",
+      "SW1"
+     ],
+     [
+      "SW1",
+      "R1"
+     ],
+     [
+      "R1",
+      "SRV1"
+     ]
+    ]
+   },
+   "candidates": [
+    {
+     "id": "c21_1",
+     "label": "夕方のバックアップ転送による輻輳",
+     "answer": true
+    },
+    {
+     "id": "c21_2",
+     "label": "SRV1 の夕方バッチによる CPU 高負荷"
+    },
+    {
+     "id": "c21_3",
+     "label": "回線の物理劣化（エラーで再送）"
+    },
+    {
+     "id": "c21_4",
+     "label": "特定部署の大容量通信（動画など）"
+    },
+    {
+     "id": "c21_5",
+     "label": "DNS の応答遅延（夕方だけ）"
+    }
+   ],
+   "observations": [
+    {
+     "id": "ac1",
+     "tool": "snmp",
+     "label": "SNMP R1（夕方の回線使用率）",
+     "cost": 1,
+     "results": {
+      "c21_1": "SATURATED",
+      "c21_2": "NORMAL",
+      "c21_3": "NORMAL",
+      "c21_4": "SATURATED",
+      "c21_5": "NORMAL"
+     },
+     "display": "夕方の回線使用率は 95% 超"
+    },
+    {
+     "id": "ac2",
+     "tool": "snmp",
+     "label": "SNMP R1（エラーカウンタ）",
+     "cost": 1,
+     "results": {
+      "c21_1": "NORMAL",
+      "c21_2": "NORMAL",
+      "c21_3": "ERR_UP",
+      "c21_4": "NORMAL",
+      "c21_5": "NORMAL"
+     },
+     "display": "エラーカウンタは増えていない"
+    },
+    {
+     "id": "ac3",
+     "tool": "snmp",
+     "label": "SNMP SRV1（夕方の CPU）",
+     "cost": 1,
+     "results": {
+      "c21_1": "NORMAL",
+      "c21_2": "CPU_HIGH",
+      "c21_3": "NORMAL",
+      "c21_4": "NORMAL",
+      "c21_5": "NORMAL"
+     },
+     "display": "SRV1 の CPU は通常"
+    },
+    {
+     "id": "ac4",
+     "tool": "log",
+     "label": "トラフィック記録の分析（夕方の内訳）",
+     "cost": 2,
+     "results": {
+      "c21_1": "BACKUP_FLOW",
+      "c21_2": "NORMAL",
+      "c21_3": "NORMAL",
+      "c21_4": "VIDEO_FLOW",
+      "c21_5": "NORMAL"
+     },
+     "display": "夕方のトラフィックの大半はバックアップサーバ宛の転送だった"
+    },
+    {
+     "id": "ac5",
+     "tool": "dns",
+     "label": "DNS 応答時間の測定",
+     "cost": 1,
+     "results": {
+      "c21_1": "FAST",
+      "c21_2": "FAST",
+      "c21_3": "FAST",
+      "c21_4": "FAST",
+      "c21_5": "SLOW_DNS"
+     },
+     "display": "名前解決は速い"
+    }
+   ],
+   "optimal": [
+    "ac4"
+   ],
+   "explanation": {
+    "evidence_chain": [
+     "ac1: 夕方だけ回線が飽和している ＝ 帯域の問題だが、誰の通信かはまだ分からない",
+     "ac2/ac3: 回線のエラーでもサーバの負荷でもない",
+     "ac4: 内訳を見ると、夕方の定期バックアップ転送が帯域を使い切っていた"
+    ],
+    "teaching": "「遅い」は帯域・機器・名前解決に分けて疑う。使用率の高さだけでは犯人は分からず、内訳で確定する。"
+   }
+  },
+  {
+   "id": "case22",
+   "level": 3,
+   "title": "電話だけ落ちる",
+   "budget": 5,
+   "symptom": "会議室の IP 電話と無線 AP がときどき落ちる。PC の通信は正常。落ちるのは決まって同じスイッチにつながった機器だけ。",
+   "topology": {
+    "nodes": [
+     {
+      "id": "PC1",
+      "x": 10,
+      "y": 16
+     },
+     {
+      "id": "TEL1",
+      "x": 10,
+      "y": 44
+     },
+     {
+      "id": "SW1",
+      "x": 34,
+      "y": 30
+     },
+     {
+      "id": "AP1",
+      "x": 62,
+      "y": 14
+     },
+     {
+      "id": "SRV1",
+      "x": 70,
+      "y": 46
+     }
+    ],
+    "edges": [
+     [
+      "PC1",
+      "SW1"
+     ],
+     [
+      "TEL1",
+      "SW1"
+     ],
+     [
+      "SW1",
+      "AP1"
+     ],
+     [
+      "SW1",
+      "SRV1"
+     ]
+    ]
+   },
+   "candidates": [
+    {
+     "id": "c22_1",
+     "label": "PoE 給電容量の不足",
+     "answer": true
+    },
+    {
+     "id": "c22_2",
+     "label": "SW1 の特定ポートの障害"
+    },
+    {
+     "id": "c22_3",
+     "label": "TEL1／AP1 の機器故障"
+    },
+    {
+     "id": "c22_4",
+     "label": "ケーブルの接触不良"
+    },
+    {
+     "id": "c22_5",
+     "label": "PoE の設定ミス（対象ポートの給電オフ）"
+    }
+   ],
+   "observations": [
+    {
+     "id": "ad1",
+     "tool": "tcp",
+     "label": "端末確認 PC1（通信状態）",
+     "cost": 1,
+     "results": {
+      "c22_1": "OK",
+      "c22_2": "OK",
+      "c22_3": "OK",
+      "c22_4": "OK",
+      "c22_5": "OK"
+     },
+     "display": "PC の通信は正常"
+    },
+    {
+     "id": "ad2",
+     "tool": "snmp",
+     "label": "SNMP SW1（落ちたポートの系統）",
+     "cost": 1,
+     "results": {
+      "c22_1": "POE_ONLY_DOWN",
+      "c22_2": "NORMAL",
+      "c22_3": "NORMAL",
+      "c22_4": "NORMAL",
+      "c22_5": "POE_ONLY_DOWN"
+     },
+     "display": "落ちているのは給電で動く機器だけ"
+    },
+    {
+     "id": "ad3",
+     "tool": "snmp",
+     "label": "SNMP SW1（ポートエラー）",
+     "cost": 1,
+     "results": {
+      "c22_1": "NORMAL",
+      "c22_2": "LINK_ERR",
+      "c22_3": "NORMAL",
+      "c22_4": "FLAP",
+      "c22_5": "NORMAL"
+     },
+     "display": "ポートエラーは出ていない"
+    },
+    {
+     "id": "ad4",
+     "tool": "tcp",
+     "label": "対照テスト（別のポートに挿し替える）",
+     "cost": 1,
+     "results": {
+      "c22_1": "FAIL",
+      "c22_2": "OK",
+      "c22_3": "FAIL",
+      "c22_4": "OK",
+      "c22_5": "OK"
+     },
+     "display": "別のポートに挿し替えても落ちる"
+    },
+    {
+     "id": "ad5",
+     "tool": "log",
+     "label": "SW1 ログ（PoE）",
+     "cost": 2,
+     "results": {
+      "c22_1": "POE_DENY_LOG",
+      "c22_2": "NONE",
+      "c22_3": "NONE",
+      "c22_4": "NONE",
+      "c22_5": "NONE"
+     },
+     "display": "給電不足でポートへの給電を止めた記録"
+    }
+   ],
+   "optimal": [
+    "ad2",
+    "ad4"
+   ],
+   "explanation": {
+    "evidence_chain": [
+     "ad1/ad2: 通信は正常で、落ちるのは給電で動く機器だけ ＝ データ系ではなく給電系の問題",
+     "ad4: 挿し替えても落ちる ＝ 特定ポートや機器そのものではない。残るは供給側の総量",
+     "ad5: 給電不足で給電を止めた記録があった。機器の追加で上限を超えていた"
+    ],
+    "teaching": "データと給電は別系統。「通信は生きているのに機器が落ちる」なら給電を疑い、挿し替えの対照実験で機器側と供給側を分ける。"
+   }
   }
  ],
  "note": "結果は候補ごとに定義する。検証器は (1) 全候補の署名の一意性 (2) 予算内で正解を一意化できる観測集合の存在 (3) 全ダミー候補の否定可能性 を検査する。",

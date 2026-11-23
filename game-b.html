@@ -137,7 +137,17 @@ const OUT_JA = { OK:'成功', FAIL:'失敗', DOWN:'down', UP:'up/up', UNREACHABL
   ACTIVE:'サービスは有効', OLD_VPN_ALIVE:'旧VPN装置が応答', TEST_ALIVE:'テスト環境が応答',
   DUMMY:'ダミーデータ', NA:'対象なし', LEAK_ONLY:'情報漏洩のみ', SHARED_LOGIN:'共有アカウントで成功',
   SHARED_ACTIVE:'共有アカウントは有効', MFA_ON:'MFAあり', BRUTE_TRACE:'総当たりの形跡',
-  FEW_TRIES:'失敗は数回だけ' };
+  FEW_TRIES:'失敗は数回だけ',
+  TEST_STALE:'検証用のまま放置', SVC_ACTIVE:'監視用（使用中）', OPS_ACTIVE:'作業用（使用中）',
+  NOT_FOUND:'台帳に存在しない', DEFAULT_PW:'初期パスワードのまま', ADMIN:'管理者権限',
+  READONLY:'読み取りのみ', REGULAR:'定期的な使用実績', BUCKET_PUBLIC:'バケット全体が公開',
+  FOLDER_PUBLIC:'公開フォルダのみ公開', LINK_ONLY:'リンク共有のみ', PRIVATE_ALL:'非公開',
+  SENSITIVE_MIXED:'機密ファイルが混在', PR_ONLY:'広報資料のみ', MASS_ACCESS:'大量取得の痕跡',
+  NORMAL_ACCESS:'通常の参照', FEW_ACCESS:'少数取得', NO_EXPIRY_LINK:'無期限リンクあり',
+  OLD_VERSION:'古いバージョン', LATEST:'最新版', NO_PATCH_YEAR:'1年間パッチなし',
+  BRUTE_ONGOING:'総当たりが継続', CREDS_VALID:'正しい認証情報で入れる', NO_LOG:'ログ未取得',
+  LOG_EXISTS:'ログ取得済み', NO_ALERT:'アラート未設定', REUSED:'使い回し（漏洩と一致）',
+  NOT_REUSED:'使い回しなし', PERIPHERAL_ONLY:'周辺記録のみ' };
 const TOOL_JA = { ping:'PING', traceroute:'TRACEROUTE', dns:'DNS', snmp:'SNMP', tcp:'TCP', log:'LOG', authlog:'AUTH LOG', scan:'SCAN', config:'CONFIG', audit:'AUDIT', header:'HEADER', test:'TEST' };
 
 let cur = null, answerId = null;

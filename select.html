@@ -40,7 +40,7 @@
     document.getElementById('case-list').innerHTML = d.cases.map(c =>
       `<button class="case-btn" data-case="${c.id}">
          <span class="lv">Lv.${c.level}</span>
-         <span><span class="t">${c.title}</span><div class="d">候補 ${c.candidates.length} 件 ／ 観測予算 ${c.budget}</div></span>
+         <span><span class="t">${c.title}</span><div class="d">${c.id} ／ 候補 ${c.candidates.length} 件 ／ 観測予算 ${c.budget}</div></span>
          ${done.includes(c.id) ? '<span class="star">★</span>' : ''}
        </button>`).join('');
     document.querySelectorAll('[data-case]').forEach(b =>

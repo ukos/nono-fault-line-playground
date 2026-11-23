@@ -1123,6 +1123,560 @@
     ],
     "teaching": "条件は組で見る。単独では入口にならない穴同士が、揃ったときに初めて成立する。最後の1ピースがどれかを特定するのが予防の診断の到達点。"
    }
+  },
+  {
+   "id": "bcase9",
+   "level": 5,
+   "title": "置きっぱなしの検証アカウント",
+   "budget": 6,
+   "symptom": "本番環境のアカウント棚卸しで、見覚えのないアカウントが見つかった。侵入の条件になっているかを特定する。",
+   "topology": {
+    "nodes": [
+     {
+      "id": "PC1",
+      "x": 10,
+      "y": 30
+     },
+     {
+      "id": "SW1",
+      "x": 30,
+      "y": 30
+     },
+     {
+      "id": "SRV1",
+      "x": 56,
+      "y": 30
+     },
+     {
+      "id": "DB1",
+      "x": 82,
+      "y": 30
+     }
+    ],
+    "edges": [
+     [
+      "PC1",
+      "SW1"
+     ],
+     [
+      "SW1",
+      "SRV1"
+     ],
+     [
+      "SRV1",
+      "DB1"
+     ]
+    ]
+   },
+   "candidates": [
+    {
+     "id": "k9_1",
+     "label": "検証用アカウントが初期パスワードのまま本番に残っている",
+     "answer": true
+    },
+    {
+     "id": "k9_2",
+     "label": "監視用の正規サービスアカウント（管理済み）"
+    },
+    {
+     "id": "k9_3",
+     "label": "共有の作業アカウント（強固なパスワードで管理あり）"
+    },
+    {
+     "id": "k9_4",
+     "label": "監査ツールの誤検出（実在しない）"
+    }
+   ],
+   "observations": [
+    {
+     "id": "ba1",
+     "tool": "audit",
+     "label": "アカウント棚卸し（命名と最終ログイン）",
+     "cost": 2,
+     "results": {
+      "k9_1": "TEST_STALE",
+      "k9_2": "SVC_ACTIVE",
+      "k9_3": "OPS_ACTIVE",
+      "k9_4": "NOT_FOUND"
+     },
+     "display": "検証用の命名（test-）で、最終ログインは1年前だった"
+    },
+    {
+     "id": "ba2",
+     "tool": "audit",
+     "label": "パスワード監査（そのアカウントの強度）",
+     "cost": 2,
+     "results": {
+      "k9_1": "DEFAULT_PW",
+      "k9_2": "STRONG",
+      "k9_3": "STRONG",
+      "k9_4": "NA"
+     },
+     "display": "初期パスワードから変更されていなかった"
+    },
+    {
+     "id": "ba3",
+     "tool": "config",
+     "label": "権限の確認",
+     "cost": 1,
+     "results": {
+      "k9_1": "ADMIN",
+      "k9_2": "READONLY",
+      "k9_3": "ADMIN",
+      "k9_4": "NA"
+     },
+     "display": "管理者権限を持っている"
+    },
+    {
+     "id": "ba4",
+     "tool": "authlog",
+     "label": "使用実績の確認（アクセスログ）",
+     "cost": 2,
+     "results": {
+      "k9_1": "NONE",
+      "k9_2": "REGULAR",
+      "k9_3": "REGULAR",
+      "k9_4": "NONE"
+     },
+     "display": "使用実績なし"
+    }
+   ],
+   "optimal": [
+    "ba1",
+    "ba2"
+   ],
+   "explanation": {
+    "evidence_chain": [
+     "ba1: 検証用の命名で、1年間誰も使っていない ＝ 管理の外に置かれたアカウント",
+     "ba2/ba3: 初期パスワードのままで、管理者権限まで持っている",
+     "放置アカウントの危険は「誰も使っていないのに、誰でも入れる」ことだった"
+    ],
+    "teaching": "棚卸しでは命名と最終ログインが目印になる。存在するのに管理されていないアカウントが条件になる。"
+   }
+  },
+  {
+   "id": "bcase10",
+   "level": 6,
+   "title": "公開バケット",
+   "budget": 5,
+   "symptom": "社外から「御社のファイルが見える」という通報があった。公開が成立している条件を特定する。",
+   "topology": {
+    "nodes": [
+     {
+      "id": "EXT",
+      "x": 10,
+      "y": 30
+     },
+     {
+      "id": "FW1",
+      "x": 32,
+      "y": 30
+     },
+     {
+      "id": "ST1",
+      "x": 58,
+      "y": 30
+     },
+     {
+      "id": "SRV1",
+      "x": 84,
+      "y": 30
+     }
+    ],
+    "edges": [
+     [
+      "EXT",
+      "FW1"
+     ],
+     [
+      "FW1",
+      "ST1"
+     ],
+     [
+      "ST1",
+      "SRV1"
+     ]
+    ]
+   },
+   "candidates": [
+    {
+     "id": "k10_1",
+     "label": "ストレージの公開設定ミス（バケット全体が公開）",
+     "answer": true
+    },
+    {
+     "id": "k10_2",
+     "label": "正規の公開資料（意図的な公開）"
+    },
+    {
+     "id": "k10_3",
+     "label": "共有リンクの無期限発行（リンクを知れば誰でも）"
+    },
+    {
+     "id": "k10_4",
+     "label": "退職者が持ち出したファイルの外部公開"
+    }
+   ],
+   "observations": [
+    {
+     "id": "bb1",
+     "tool": "audit",
+     "label": "公開範囲の確認（ストレージ設定）",
+     "cost": 2,
+     "results": {
+      "k10_1": "BUCKET_PUBLIC",
+      "k10_2": "FOLDER_PUBLIC",
+      "k10_3": "LINK_ONLY",
+      "k10_4": "PRIVATE_ALL"
+     },
+     "display": "バケット全体が Public になっていた"
+    },
+    {
+     "id": "bb2",
+     "tool": "scan",
+     "label": "中身の棚卸し（公開範囲のファイル）",
+     "cost": 1,
+     "results": {
+      "k10_1": "SENSITIVE_MIXED",
+      "k10_2": "PR_ONLY",
+      "k10_3": "SENSITIVE_MIXED",
+      "k10_4": "NA"
+     },
+     "display": "公開範囲に顧客情報を含むファイルが混在していた"
+    },
+    {
+     "id": "bb3",
+     "tool": "authlog",
+     "label": "アクセスログ（外部からの取得）",
+     "cost": 2,
+     "results": {
+      "k10_1": "MASS_ACCESS",
+      "k10_2": "NORMAL_ACCESS",
+      "k10_3": "FEW_ACCESS",
+      "k10_4": "NONE"
+     },
+     "display": "検索エンジン経由で大量に取得されていた"
+    },
+    {
+     "id": "bb4",
+     "tool": "config",
+     "label": "共有リンクの監査",
+     "cost": 1,
+     "results": {
+      "k10_1": "NONE",
+      "k10_2": "NONE",
+      "k10_3": "NO_EXPIRY_LINK",
+      "k10_4": "NONE"
+     },
+     "display": "無期限の共有リンクはなし"
+    }
+   ],
+   "optimal": [
+    "bb1"
+   ],
+   "explanation": {
+    "evidence_chain": [
+     "bb1: バケット全体が Public ＝ リンクを知らなくても、誰でも列挙して取得できる状態",
+     "bb2: その範囲に顧客情報まで混在していた",
+     "bb3: 実際に検索エンジン経由で大量に取得されていた。「見える」ではなく「見られていた」"
+    ],
+    "teaching": "公開の成立は、設定・中身・取得の痕跡の3点で見る。全体公開・リンク共有・持ち出しは、対処がまったく違う。"
+   }
+  },
+  {
+   "id": "bcase11",
+   "level": 7,
+   "title": "止まった更新",
+   "budget": 5,
+   "symptom": "VPN 装置へのスキャンの痕跡が増えている。侵入が成立する条件を、装置側から特定する。",
+   "topology": {
+    "nodes": [
+     {
+      "id": "EXT",
+      "x": 8,
+      "y": 30
+     },
+     {
+      "id": "VPN1",
+      "x": 32,
+      "y": 30
+     },
+     {
+      "id": "SW1",
+      "x": 54,
+      "y": 30
+     },
+     {
+      "id": "PC1",
+      "x": 78,
+      "y": 16
+     },
+     {
+      "id": "SRV1",
+      "x": 78,
+      "y": 46
+     }
+    ],
+    "edges": [
+     [
+      "EXT",
+      "VPN1"
+     ],
+     [
+      "VPN1",
+      "SW1"
+     ],
+     [
+      "SW1",
+      "PC1"
+     ],
+     [
+      "SW1",
+      "SRV1"
+     ]
+    ]
+   },
+   "candidates": [
+    {
+     "id": "k11_1",
+     "label": "VPN 装置の既知の脆弱性が未パッチ",
+     "answer": true
+    },
+    {
+     "id": "k11_2",
+     "label": "弱いパスワードへの総当たり（認証側の問題）"
+    },
+    {
+     "id": "k11_3",
+     "label": "装置の管理画面が外部公開"
+    },
+    {
+     "id": "k11_4",
+     "label": "証明書の期限切れ（接続性の問題）"
+    }
+   ],
+   "observations": [
+    {
+     "id": "bc1",
+     "tool": "scan",
+     "label": "スキャン詳細（装置のバージョン）",
+     "cost": 1,
+     "results": {
+      "k11_1": "OLD_VERSION",
+      "k11_2": "LATEST",
+      "k11_3": "LATEST",
+      "k11_4": "OLD_VERSION"
+     },
+     "display": "装置のバージョンが古く、既知の脆弱性に一致する"
+    },
+    {
+     "id": "bc2",
+     "tool": "log",
+     "label": "パッチ適用履歴",
+     "cost": 2,
+     "results": {
+      "k11_1": "NO_PATCH_YEAR",
+      "k11_2": "PATCHED",
+      "k11_3": "PATCHED",
+      "k11_4": "PATCHED"
+     },
+     "display": "1年間パッチが適用されていなかった"
+    },
+    {
+     "id": "bc3",
+     "tool": "test",
+     "label": "管理画面の到達性テスト",
+     "cost": 1,
+     "results": {
+      "k11_1": "BLOCKED",
+      "k11_2": "BLOCKED",
+      "k11_3": "REACHABLE",
+      "k11_4": "BLOCKED"
+     },
+     "display": "管理画面には到達できない"
+    },
+    {
+     "id": "bc4",
+     "tool": "authlog",
+     "label": "認証ログ（試行の量）",
+     "cost": 1,
+     "results": {
+      "k11_1": "NORMAL",
+      "k11_2": "BRUTE_ONGOING",
+      "k11_3": "NORMAL",
+      "k11_4": "NORMAL"
+     },
+     "display": "認証試行は通常範囲"
+    },
+    {
+     "id": "bc5",
+     "tool": "config",
+     "label": "証明書の確認（装置の提示証明書）",
+     "cost": 1,
+     "results": {
+      "k11_1": "VALID",
+      "k11_2": "VALID",
+      "k11_3": "VALID",
+      "k11_4": "EXPIRED"
+     },
+     "display": "証明書は有効"
+    }
+   ],
+   "optimal": [
+    "bc1",
+    "bc5"
+   ],
+   "explanation": {
+    "evidence_chain": [
+     "bc1: バージョンが古く、既知の脆弱性に一致する。ただし古いだけでは確定しない",
+     "bc5/bc3/bc4: 証明書・管理画面・認証試行は正常 ＝ 入口は装置そのものの欠陥側",
+     "bc2: 1年間パッチが止まっていた。スキャンの痕跡は「狙われている」証拠で、成立条件はバージョンと履歴で確定した"
+    ],
+    "teaching": "痕跡は狙われている証拠にすぎない。成立条件は、対象の状態（バージョン・履歴）を見て確定させる。"
+   }
+  },
+  {
+   "id": "bcase12",
+   "level": 8,
+   "title": "記録のない部屋",
+   "budget": 7,
+   "symptom": "侵入の形跡はあるのに、肝心のログが残っていない。成立した条件の「組」を特定する。",
+   "topology": {
+    "nodes": [
+     {
+      "id": "EXT",
+      "x": 8,
+      "y": 30
+     },
+     {
+      "id": "FW1",
+      "x": 30,
+      "y": 30
+     },
+     {
+      "id": "WEB1",
+      "x": 56,
+      "y": 30
+     },
+     {
+      "id": "SRV1",
+      "x": 82,
+      "y": 30
+     }
+    ],
+    "edges": [
+     [
+      "EXT",
+      "FW1"
+     ],
+     [
+      "FW1",
+      "WEB1"
+     ],
+     [
+      "WEB1",
+      "SRV1"
+     ]
+    ]
+   },
+   "candidates": [
+    {
+     "id": "k12_1",
+     "label": "［管理画面の初期パスワード］＋［アクセスログ未取得］",
+     "answer": true
+    },
+    {
+     "id": "k12_2",
+     "label": "［管理画面の初期パスワード］＋［ログはあるがアラート未設定］"
+    },
+    {
+     "id": "k12_3",
+     "label": "［正規アカウントのパスワード使い回し］＋［アクセスログ未取得］"
+    },
+    {
+     "id": "k12_4",
+     "label": "［正規アカウントのパスワード使い回し］＋［アラート未設定］"
+    }
+   ],
+   "observations": [
+    {
+     "id": "bd1",
+     "tool": "audit",
+     "label": "認証の確認（管理画面にログインを試みる）",
+     "cost": 2,
+     "results": {
+      "k12_1": "DEFAULT_CREDS",
+      "k12_2": "DEFAULT_CREDS",
+      "k12_3": "CREDS_VALID",
+      "k12_4": "CREDS_VALID"
+     },
+     "display": "管理画面に初期パスワードでログインできた"
+    },
+    {
+     "id": "bd2",
+     "tool": "config",
+     "label": "ログの棚卸し（そのサーバの取得状況）",
+     "cost": 1,
+     "results": {
+      "k12_1": "NO_LOG",
+      "k12_2": "LOG_EXISTS",
+      "k12_3": "NO_LOG",
+      "k12_4": "LOG_EXISTS"
+     },
+     "display": "そのサーバのアクセスログが取得されていなかった"
+    },
+    {
+     "id": "bd3",
+     "tool": "config",
+     "label": "アラート設定の確認",
+     "cost": 1,
+     "results": {
+      "k12_1": "NA",
+      "k12_2": "NO_ALERT",
+      "k12_3": "NA",
+      "k12_4": "NO_ALERT"
+     },
+     "display": "アラート以前に、対象のログ自体がない"
+    },
+    {
+     "id": "bd4",
+     "tool": "audit",
+     "label": "パスワード監査（正規アカウントの使い回し）",
+     "cost": 2,
+     "results": {
+      "k12_1": "NOT_REUSED",
+      "k12_2": "NOT_REUSED",
+      "k12_3": "REUSED",
+      "k12_4": "REUSED"
+     },
+     "display": "正規アカウントの使い回しは見つからない"
+    },
+    {
+     "id": "bd5",
+     "tool": "authlog",
+     "label": "周辺ログの確認（FW の記録）",
+     "cost": 1,
+     "results": {
+      "k12_1": "PERIPHERAL_ONLY",
+      "k12_2": "PERIPHERAL_ONLY",
+      "k12_3": "PERIPHERAL_ONLY",
+      "k12_4": "PERIPHERAL_ONLY"
+     },
+     "display": "周辺の FW 記録で、深夜のアクセスだけが分かる"
+    }
+   ],
+   "optimal": [
+    "bd1",
+    "bd2"
+   ],
+   "explanation": {
+    "evidence_chain": [
+     "bd1: 入口は管理画面で、初期パスワードのままだった",
+     "bd2: そのサーバのログは取得自体がされていなかった ＝ 入口の穴と監視の穴が揃っていた",
+     "bd4: 正規アカウントの使い回しではない。侵入は成立したうえに、記録がないので発見も遅れた"
+    ],
+    "teaching": "「気づけない」も条件の1つ。入口の穴と監視の穴が揃うと、侵入は成立し、発見も遅れる。予防の診断は両方を組で特定して完了する。"
+   }
   }
  ]
 }

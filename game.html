@@ -119,7 +119,13 @@ const OUT_JA = { OK:'成功', FAIL:'失敗', DOWN:'down', UP:'up/up', UNREACHABL
   BOTH_OK:'A/AAAAとも正常', WRONG_AAAA:'誤ったAAAA応答', REACH_NEAR:'サイト手前まで到達',
   WRONG_DST:'無関係な宛先へ', DENY6:'IPv6のdenyログ', NO_V6_ROUTE:'IPv6デフォルトルートなし',
   ROUTE_EXISTS:'経路あり', STALE_LEASES:'リースの滞留', NO_LEASE_LOG:'空きなし記録が集中',
-  SVC_STOP:'サービス停止の記録' };
+  SVC_STOP:'サービス停止の記録',
+  ESTABLISHED:'Established', MISSING:'プレフィックスなし', PRESENT:'プレフィックスあり',
+  SESSION_DOWN:'セッション断のログ', ARRIVE:'到達する', NO_REPLY:'応答なく停止', NO_VIP:'仮想IPなし',
+  MASTER:'マスター状態', STALE_ARP:'古いARPを保持', CONFIG_WARN:'設定不足の警告',
+  SATURATED:'使用率95%超', ERR_UP:'エラー増加', BACKUP_FLOW:'バックアップ転送が大半',
+  VIDEO_FLOW:'動画系通信が大半', SLOW_DNS:'名前解決が遅い', POE_ONLY_DOWN:'落ちたのは給電機器のみ',
+  FLAP:'断続', POE_DENY_LOG:'給電不足の記録' };
 const TOOL_JA = { ping:'PING', traceroute:'TRACEROUTE', dns:'DNS', snmp:'SNMP', tcp:'TCP', log:'LOG' };
 
 let cur = null, answerId = null;
