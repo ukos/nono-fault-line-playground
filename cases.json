@@ -1034,6 +1034,571 @@
     ],
     "teaching": "『どこで止まるか』を traceroute で押さえると、往路の問題か戻りの問題かが分かれる。ping の成否だけでは往路・戻りの区別がつかない。"
    }
+  },
+  {
+   "id": "case7",
+   "level": 6,
+   "title": "行きは良いのに帰りが来ない",
+   "budget": 7,
+   "symptom": "PC1 から SRV1 への接続が確立しない、または確立してもすぐ切れる。ping は正常に応答する。経路は R1–R2 の直接リンクと、R3 経由の迂回路がある。",
+   "topology": {
+    "nodes": [
+     {
+      "id": "PC1",
+      "x": 10,
+      "y": 20
+     },
+     {
+      "id": "PC2",
+      "x": 10,
+      "y": 48
+     },
+     {
+      "id": "R1",
+      "x": 30,
+      "y": 34
+     },
+     {
+      "id": "R3",
+      "x": 52,
+      "y": 10
+     },
+     {
+      "id": "R2",
+      "x": 70,
+      "y": 34
+     },
+     {
+      "id": "SRV1",
+      "x": 90,
+      "y": 34
+     }
+    ],
+    "edges": [
+     [
+      "PC1",
+      "R1"
+     ],
+     [
+      "PC2",
+      "R1"
+     ],
+     [
+      "R1",
+      "R2"
+     ],
+     [
+      "R1",
+      "R3"
+     ],
+     [
+      "R3",
+      "R2"
+     ],
+     [
+      "R2",
+      "SRV1"
+     ]
+    ]
+   },
+   "candidates": [
+    {
+     "id": "c7_1",
+     "label": "非対称ルーティング＋ステートフル FW が戻りを破棄",
+     "answer": true
+    },
+    {
+     "id": "c7_2",
+     "label": "SRV1 の TCP サービス異常"
+    },
+    {
+     "id": "c7_3",
+     "label": "R2 の ACL が戻りの高ポートを遮断"
+    },
+    {
+     "id": "c7_4",
+     "label": "R3 経由トンネルの MTU 不一致"
+    },
+    {
+     "id": "c7_5",
+     "label": "PC1 のローカル FW が戻りを遮断"
+    }
+   ],
+   "observations": [
+    {
+     "id": "v1",
+     "tool": "ping",
+     "label": "ping PC1→SRV1",
+     "cost": 1,
+     "results": {
+      "c7_1": "OK",
+      "c7_2": "OK",
+      "c7_3": "OK",
+      "c7_4": "OK",
+      "c7_5": "OK"
+     },
+     "display": "応答あり — 損失 0%"
+    },
+    {
+     "id": "v2",
+     "tool": "tcp",
+     "label": "TCP疎通 PC1→SRV1:443",
+     "cost": 1,
+     "results": {
+      "c7_1": "FAIL",
+      "c7_2": "FAIL",
+      "c7_3": "FAIL",
+      "c7_4": "OK",
+      "c7_5": "FAIL"
+     },
+     "display": "タイムアウト（SYN への応答が戻らない）"
+    },
+    {
+     "id": "v3",
+     "tool": "traceroute",
+     "label": "traceroute PC1→SRV1（往路）",
+     "cost": 1,
+     "results": {
+      "c7_1": "VIA_R3",
+      "c7_2": "DIRECT",
+      "c7_3": "DIRECT",
+      "c7_4": "VIA_R3",
+      "c7_5": "DIRECT"
+     },
+     "display": "R1 → R3 → R2 → SRV1（直接リンクではない経路）"
+    },
+    {
+     "id": "v4",
+     "tool": "traceroute",
+     "label": "traceroute SRV1→PC1（戻り方向）",
+     "cost": 1,
+     "results": {
+      "c7_1": "DIRECT",
+      "c7_2": "DIRECT",
+      "c7_3": "DIRECT",
+      "c7_4": "DIRECT",
+      "c7_5": "STOP_AT_PC1"
+     },
+     "display": "R2 → R1 → PC1（往路と異なる直接経路）"
+    },
+    {
+     "id": "v5",
+     "tool": "log",
+     "label": "FW1 ログ（直接リンク上のステートフル FW）",
+     "cost": 2,
+     "results": {
+      "c7_1": "INVALID_DROP",
+      "c7_2": "NONE",
+      "c7_3": "NONE",
+      "c7_4": "NONE",
+      "c7_5": "NONE"
+     },
+     "display": "戻り方向の SYN-ACK を「未確立セッション」として破棄した記録が多数"
+    },
+    {
+     "id": "v6",
+     "tool": "snmp",
+     "label": "SNMP R2（ACL カウンタ）",
+     "cost": 1,
+     "results": {
+      "c7_1": "NORMAL",
+      "c7_2": "NORMAL",
+      "c7_3": "DENY_UP",
+      "c7_4": "NORMAL",
+      "c7_5": "NORMAL"
+     },
+     "display": "ACL の deny カウンタは増えていない"
+    },
+    {
+     "id": "v7",
+     "tool": "tcp",
+     "label": "TCP疎通 PC2→SRV1:443（別端末の対照）",
+     "cost": 1,
+     "results": {
+      "c7_1": "FAIL",
+      "c7_2": "FAIL",
+      "c7_3": "FAIL",
+      "c7_4": "OK",
+      "c7_5": "OK"
+     },
+     "display": "タイムアウト（PC2 からも同じ）"
+    }
+   ],
+   "optimal": [
+    "v2",
+    "v3"
+   ],
+   "explanation": {
+    "evidence_chain": [
+     "v1/v2: ping は通るのに TCP が確立しない ＝ 到達性の問題ではなく、戻りの応答がどこかで消えている",
+     "v3/v4: 往路は R3 経由、戻りは直接リンク ＝ 非対称ルーティングになっている",
+     "v5: 直接リンク上のステートフル FW は往路の SYN を見ていないため、戻りの SYN-ACK を未確立として破棄する"
+    ],
+    "teaching": "非対称ルーティング自体は悪ではない。経路上にステートフルな機器があると壊れる。traceroute は往路だけでなく戻り方向でも取ること。"
+   }
+  },
+  {
+   "id": "case8",
+   "level": 6,
+   "title": "新しい端末だけつながらない",
+   "budget": 6,
+   "symptom": "新しく持ち込んだ PC2 だけ、IP アドレスは取れているのに通信できない。既存の端末は正常。",
+   "topology": {
+    "nodes": [
+     {
+      "id": "PC1",
+      "x": 10,
+      "y": 14
+     },
+     {
+      "id": "SW1",
+      "x": 28,
+      "y": 26
+     },
+     {
+      "id": "DHCP1",
+      "x": 10,
+      "y": 44
+     },
+     {
+      "id": "R1",
+      "x": 50,
+      "y": 26
+     },
+     {
+      "id": "SRV1",
+      "x": 74,
+      "y": 10
+     },
+     {
+      "id": "SW2",
+      "x": 72,
+      "y": 42
+     },
+     {
+      "id": "PC2",
+      "x": 90,
+      "y": 42
+     }
+    ],
+    "edges": [
+     [
+      "PC1",
+      "SW1"
+     ],
+     [
+      "DHCP1",
+      "SW1"
+     ],
+     [
+      "SW1",
+      "R1"
+     ],
+     [
+      "R1",
+      "SRV1"
+     ],
+     [
+      "R1",
+      "SW2"
+     ],
+     [
+      "SW2",
+      "PC2"
+     ]
+    ]
+   },
+   "candidates": [
+    {
+     "id": "c8_1",
+     "label": "DHCP プール枯渇"
+    },
+    {
+     "id": "c8_2",
+     "label": "PC2 ポートの VLAN 誤設定（ラボ用 DHCP が応答）"
+    },
+    {
+     "id": "c8_3",
+     "label": "DHCP リレー（IP helper）の欠落"
+    },
+    {
+     "id": "c8_4",
+     "label": "PC2 の NIC 不良"
+    },
+    {
+     "id": "c8_5",
+     "label": "不正な DHCP サーバ（持ち込みルータ）",
+     "answer": true
+    }
+   ],
+   "observations": [
+    {
+     "id": "w1",
+     "tool": "snmp",
+     "label": "SNMP DHCP1（スコープ使用率）",
+     "cost": 1,
+     "results": {
+      "c8_1": "POOL_FULL",
+      "c8_2": "FREE",
+      "c8_3": "FREE",
+      "c8_4": "FREE",
+      "c8_5": "FREE"
+     },
+     "display": "スコープ使用率 62%（空きあり）"
+    },
+    {
+     "id": "w2",
+     "tool": "tcp",
+     "label": "端末確認 PC2（取得 IP とゲートウェイ）",
+     "cost": 1,
+     "results": {
+      "c8_1": "APIPA",
+      "c8_2": "WRONG_ADDR",
+      "c8_3": "APIPA",
+      "c8_4": "LINK_DOWN",
+      "c8_5": "WRONG_ADDR"
+     },
+     "display": "想定外セグメントのアドレスを取得。ゲートウェイも未知のアドレス"
+    },
+    {
+     "id": "w3",
+     "tool": "snmp",
+     "label": "SNMP SW2（PC2 ポートの VLAN）",
+     "cost": 1,
+     "results": {
+      "c8_1": "NORMAL",
+      "c8_2": "VLAN_WRONG",
+      "c8_3": "NORMAL",
+      "c8_4": "NORMAL",
+      "c8_5": "NORMAL"
+     },
+     "display": "PC2 ポートの VLAN は想定どおり"
+    },
+    {
+     "id": "w4",
+     "tool": "log",
+     "label": "DHCP1 ログ",
+     "cost": 2,
+     "results": {
+      "c8_1": "REQ_NO_LEASE",
+      "c8_2": "NONE",
+      "c8_3": "NONE",
+      "c8_4": "NONE",
+      "c8_5": "NONE"
+     },
+     "display": "PC2 の DISCOVER への自サーバ応答記録なし"
+    },
+    {
+     "id": "w5",
+     "tool": "snmp",
+     "label": "SNMP SW2（DHCP 応答元のポート）",
+     "cost": 1,
+     "results": {
+      "c8_1": "NO_RESPONSE",
+      "c8_2": "SRC_PC_PORT",
+      "c8_3": "NO_RESPONSE",
+      "c8_4": "NO_RESPONSE",
+      "c8_5": "SRC_PC_PORT"
+     },
+     "display": "DHCP 応答元は SW2 の一般端末ポート（サーバポートではない）"
+    }
+   ],
+   "optimal": [
+    "w3",
+    "w5"
+   ],
+   "explanation": {
+    "evidence_chain": [
+     "w2: PC2 は想定外セグメントのアドレスを取っている ＝ 正規ではない何者かがアドレスを配っている",
+     "w3: ポートの VLAN は正常 ＝ ラボ用 DHCP の仕業ではない",
+     "w5: 応答元は一般端末ポート ＝ 利用者が持ち込んだルータが DHCP サーバとして応答していた"
+    ],
+    "teaching": "DHCP の問題は「配る側が誰か」を確認すると早い。応答元ポートの特定は、スイッチの情報でできる。"
+   }
+  },
+  {
+   "id": "case9",
+   "level": 7,
+   "title": "会議室だけ遅い",
+   "budget": 6,
+   "symptom": "会議室（AP1 配下）だけ体感が遅い。執務室（AP2）は快適で、有線も正常。夕方に悪化する傾向がある。",
+   "topology": {
+    "nodes": [
+     {
+      "id": "PC1",
+      "x": 10,
+      "y": 16
+     },
+     {
+      "id": "AP1",
+      "x": 30,
+      "y": 16
+     },
+     {
+      "id": "PC2",
+      "x": 10,
+      "y": 46
+     },
+     {
+      "id": "AP2",
+      "x": 30,
+      "y": 46
+     },
+     {
+      "id": "SW1",
+      "x": 54,
+      "y": 30
+     },
+     {
+      "id": "SRV1",
+      "x": 82,
+      "y": 30
+     }
+    ],
+    "edges": [
+     [
+      "PC1",
+      "AP1"
+     ],
+     [
+      "PC2",
+      "AP2"
+     ],
+     [
+      "AP1",
+      "SW1"
+     ],
+     [
+      "AP2",
+      "SW1"
+     ],
+     [
+      "SW1",
+      "SRV1"
+     ]
+    ]
+   },
+   "candidates": [
+    {
+     "id": "c9_1",
+     "label": "AP1 のチャネル干渉（近隣 AP と同一チャネル）",
+     "answer": true
+    },
+    {
+     "id": "c9_2",
+     "label": "AP1 の故障（送信出力の低下）"
+    },
+    {
+     "id": "c9_3",
+     "label": "会議室の接続端末数過多"
+    },
+    {
+     "id": "c9_4",
+     "label": "SW1–AP1 の有線が 100M/Half に低下"
+    },
+    {
+     "id": "c9_5",
+     "label": "SRV1 の夕方バッチによる負荷"
+    }
+   ],
+   "observations": [
+    {
+     "id": "x1",
+     "tool": "snmp",
+     "label": "SNMP AP1（再送率・チャネル使用率）",
+     "cost": 1,
+     "results": {
+      "c9_1": "RETRY_HIGH",
+      "c9_2": "RETRY_HIGH",
+      "c9_3": "UTIL_HIGH",
+      "c9_4": "NORMAL",
+      "c9_5": "NORMAL"
+     },
+     "display": "再送率 38%（チャネル使用率も高い）"
+    },
+    {
+     "id": "x2",
+     "tool": "snmp",
+     "label": "SNMP AP1（接続端末数）",
+     "cost": 1,
+     "results": {
+      "c9_1": "NORMAL",
+      "c9_2": "NORMAL",
+      "c9_3": "MANY",
+      "c9_4": "NORMAL",
+      "c9_5": "NORMAL"
+     },
+     "display": "接続 12 台（過多ではない）"
+    },
+    {
+     "id": "x3",
+     "tool": "snmp",
+     "label": "SNMP SW1（AP1 向けポート）",
+     "cost": 1,
+     "results": {
+      "c9_1": "FULL",
+      "c9_2": "FULL",
+      "c9_3": "FULL",
+      "c9_4": "NEGO_HALF",
+      "c9_5": "FULL"
+     },
+     "display": "1Gbps / Full でリンク"
+    },
+    {
+     "id": "x4",
+     "tool": "snmp",
+     "label": "サイトサーベイ（AP1 周辺の電波）",
+     "cost": 1,
+     "results": {
+      "c9_1": "CO_CH",
+      "c9_2": "WEAK_SIG",
+      "c9_3": "CO_CH",
+      "c9_4": "GOOD",
+      "c9_5": "GOOD"
+     },
+     "display": "同一チャネルに近隣オフィスの強い AP が 2 つ"
+    },
+    {
+     "id": "x5",
+     "tool": "snmp",
+     "label": "SNMP SRV1（負荷）",
+     "cost": 1,
+     "results": {
+      "c9_1": "NORMAL",
+      "c9_2": "NORMAL",
+      "c9_3": "NORMAL",
+      "c9_4": "NORMAL",
+      "c9_5": "CPU_HIGH_EVE"
+     },
+     "display": "SRV1 の負荷は通常"
+    },
+    {
+     "id": "x6",
+     "tool": "tcp",
+     "label": "有線端末→SRV1 の速度テスト（対照）",
+     "cost": 1,
+     "results": {
+      "c9_1": "FAST",
+      "c9_2": "FAST",
+      "c9_3": "FAST",
+      "c9_4": "FAST",
+      "c9_5": "SLOW"
+     },
+     "display": "有線からは高速（問題は無線区間）"
+    }
+   ],
+   "optimal": [
+    "x1",
+    "x4"
+   ],
+   "explanation": {
+    "evidence_chain": [
+     "x1: 再送率が高い ＝ 電波の取り合いか、電波自体の弱さが起きている",
+     "x4: AP1 自体の電波は弱くなく、同一チャネルに近隣の強い AP がいる ＝ 干渉と特定",
+     "x2/x3: 台数過多でも有線側の低下でもないことを確認"
+    ],
+    "teaching": "無線の遅さは「再送」と「使用率」を分けて見る。再送が高いのに自APの使用率が支配的でなければ、干渉を疑う。"
+   }
   }
  ],
  "note": "結果は候補ごとに定義する。検証器は (1) 全候補の署名の一意性 (2) 予算内で正解を一意化できる観測集合の存在 (3) 全ダミー候補の否定可能性 を検査する。",

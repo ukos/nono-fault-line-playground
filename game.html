@@ -98,7 +98,14 @@ const OUT_JA = { OK:'成功', FAIL:'失敗', DOWN:'down', UP:'up/up', UNREACHABL
   MAC_FLAP:'MACフラッピング', CPU_HIGH:'CPU高負荷', CPU_95:'CPU 95%', DISCARD_UP:'破棄増加', CRC_UP:'CRCエラー増加',
   STP_TCN_STORM:'STPトポロジ変更が多発', MTU_1400:'MTU 1400', BW_HIGH:'帯域逼迫', PMTUD_BLOCKED:'PMTUD遮断',
   OK_LATENCY:'成功（遅延あり）', STOP_AT_R2:'R2で停止', TO_R1_STAR:'R1まで到達・以降応答なし',
-  IF_DOWN:'IFダウン', DENY:'denyログあり', WRONG_GW:'ゲートウェイ誤り' };
+  IF_DOWN:'IFダウン', DENY:'denyログあり', WRONG_GW:'ゲートウェイ誤り',
+  VIA_R3:'R3経由', DIRECT:'直接経路', INVALID_DROP:'ステート不一致で破棄', DENY_UP:'denyカウンタ増加',
+  STOP_AT_PC1:'PC1手前で停止', POOL_FULL:'プール枯渇', FREE:'空きあり', APIPA:'APIPAアドレス',
+  WRONG_ADDR:'想定外セグメントのアドレス', LINK_DOWN:'リンクダウン', VLAN_WRONG:'VLAN誤り',
+  REQ_NO_LEASE:'空きなしで応答不可', NO_RESPONSE:'応答なし', SRC_PC_PORT:'一般端末ポートから応答',
+  RETRY_HIGH:'再送率が高い', UTIL_HIGH:'使用率が高い', MANY:'接続台数が多い', NEGO_HALF:'100M/Halfに低下',
+  FULL:'正常リンク', CO_CH:'同一チャネル干渉', WEAK_SIG:'電波が弱い', GOOD:'良好',
+  CPU_HIGH_EVE:'夕方にCPU高負荷', FAST:'高速', SLOW:'低速' };
 const TOOL_JA = { ping:'PING', traceroute:'TRACEROUTE', dns:'DNS', snmp:'SNMP', tcp:'TCP', log:'LOG' };
 
 let cur = null, answerId = null;
