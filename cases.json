@@ -1599,6 +1599,190 @@
     ],
     "teaching": "無線の遅さは「再送」と「使用率」を分けて見る。再送が高いのに自APの使用率が支配的でなければ、干渉を疑う。"
    }
+  },
+  {
+   "id": "case10",
+   "level": 8,
+   "title": "月末の夜に全部止まった",
+   "budget": 7,
+   "symptom": "月末の夜、複数サービスが同時に不調。SRV1（業務システム）にも SRV2（ファイルサーバ）にも届きにくい。一つの障害では説明がつかない気がする。",
+   "topology": {
+    "nodes": [
+     {
+      "id": "PC1",
+      "x": 10,
+      "y": 30
+     },
+     {
+      "id": "SW1",
+      "x": 28,
+      "y": 30
+     },
+     {
+      "id": "R1",
+      "x": 48,
+      "y": 16
+     },
+     {
+      "id": "SRV1",
+      "x": 74,
+      "y": 16
+     },
+     {
+      "id": "SW2",
+      "x": 48,
+      "y": 46
+     },
+     {
+      "id": "SRV2",
+      "x": 74,
+      "y": 46
+     }
+    ],
+    "edges": [
+     [
+      "PC1",
+      "SW1"
+     ],
+     [
+      "SW1",
+      "R1"
+     ],
+     [
+      "R1",
+      "SRV1"
+     ],
+     [
+      "SW1",
+      "SW2"
+     ],
+     [
+      "SW2",
+      "SRV2"
+     ]
+    ]
+   },
+   "candidates": [
+    {
+     "id": "c10_1",
+     "label": "SW1–R1 リンク障害のみ"
+    },
+    {
+     "id": "c10_2",
+     "label": "SRV2 の性能問題のみ"
+    },
+    {
+     "id": "c10_3",
+     "label": "R1 の装置異常"
+    },
+    {
+     "id": "c10_4",
+     "label": "二重障害（リンク CRC＋SRV2 のディスク高負荷）",
+     "answer": true
+    },
+    {
+     "id": "c10_5",
+     "label": "月末トラフィックによる回線輻輳"
+    }
+   ],
+   "observations": [
+    {
+     "id": "y1",
+     "tool": "ping",
+     "label": "ping PC1→SRV1（連続）",
+     "cost": 1,
+     "results": {
+      "c10_1": "LOSS_MID",
+      "c10_2": "OK",
+      "c10_3": "LOSS_HEAVY",
+      "c10_4": "LOSS_MID",
+      "c10_5": "OK_LATENCY"
+     },
+     "display": "損失 18%（断続的）"
+    },
+    {
+     "id": "y2",
+     "tool": "ping",
+     "label": "ping PC1→SRV2（連続）",
+     "cost": 1,
+     "results": {
+      "c10_1": "LOSS_MID",
+      "c10_2": "OK_LATENCY",
+      "c10_3": "LOSS_HEAVY",
+      "c10_4": "OK_LATENCY",
+      "c10_5": "OK_LATENCY"
+     },
+     "display": "応答あり（遅延が大きい、損失なし）"
+    },
+    {
+     "id": "y3",
+     "tool": "tcp",
+     "label": "取得テスト PC1→SRV2",
+     "cost": 1,
+     "results": {
+      "c10_1": "TIMEOUT",
+      "c10_2": "SLOW",
+      "c10_3": "TIMEOUT",
+      "c10_4": "SLOW",
+      "c10_5": "SLOW"
+     },
+     "display": "取得は完走するが非常に遅い"
+    },
+    {
+     "id": "y4",
+     "tool": "snmp",
+     "label": "SNMP SW1（R1 向けポート）",
+     "cost": 1,
+     "results": {
+      "c10_1": "CRC_UP",
+      "c10_2": "NORMAL",
+      "c10_3": "NORMAL",
+      "c10_4": "CRC_UP",
+      "c10_5": "DISCARD_UP"
+     },
+     "display": "CRC エラーが増加"
+    },
+    {
+     "id": "y5",
+     "tool": "snmp",
+     "label": "SNMP SRV2（ディスク）",
+     "cost": 1,
+     "results": {
+      "c10_1": "NORMAL",
+      "c10_2": "DISK_HIGH",
+      "c10_3": "NORMAL",
+      "c10_4": "DISK_HIGH",
+      "c10_5": "NORMAL"
+     },
+     "display": "ディスク使用率 99%（応答待ちが多発）"
+    },
+    {
+     "id": "y6",
+     "tool": "snmp",
+     "label": "SNMP R1（CPU）",
+     "cost": 1,
+     "results": {
+      "c10_1": "NORMAL",
+      "c10_2": "NORMAL",
+      "c10_3": "CPU_95",
+      "c10_4": "NORMAL",
+      "c10_5": "NORMAL"
+     },
+     "display": "R1 の CPU は通常"
+    }
+   ],
+   "optimal": [
+    "y4",
+    "y5"
+   ],
+   "explanation": {
+    "evidence_chain": [
+     "SRV1 側の不調（y1 の損失）は y4 の CRC エラーで説明できるが、SRV2 の遅さは説明できない",
+     "SRV2 側の遅さ（y2/y3）は y5 のディスク高負荷で説明できるが、SRV1 の損失は説明できない",
+     "二つの証拠は独立しており、単独候補では片方しか説明できない ＝ 二重障害"
+    ],
+    "teaching": "症状が2系統あるとき、単一障害で全部を説明しようとしない。各系統の証拠を別々に集めると、同時に起きた別の障害が見えてくる。"
+   }
   }
  ],
  "note": "結果は候補ごとに定義する。検証器は (1) 全候補の署名の一意性 (2) 予算内で正解を一意化できる観測集合の存在 (3) 全ダミー候補の否定可能性 を検査する。",
