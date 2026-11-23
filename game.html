@@ -93,7 +93,12 @@
 const OUT_JA = { OK:'成功', FAIL:'失敗', DOWN:'down', UP:'up/up', UNREACHABLE:'応答なし',
   NXDOMAIN:'NXDOMAIN', ANSWER:'正常な回答', TIMEOUT:'タイムアウト', REFUSED:'REFUSED（接続拒否）',
   CONNECT_OK:'接続成功', FAIL_CONNECT:'接続失敗', STALL_AFTER_CONNECT:'接続後に応答なし',
-  DENY_LOG_FOUND:'denyログあり', NONE:'該当ログなし' };
+  DENY_LOG_FOUND:'denyログあり', NONE:'該当ログなし',
+  LOSS_HEAVY:'損失大', LOSS_MID:'損失あり', LOSS_LATENCY:'遅延大', BCAST_EXTREME:'ブロードキャスト激増',
+  MAC_FLAP:'MACフラッピング', CPU_HIGH:'CPU高負荷', CPU_95:'CPU 95%', DISCARD_UP:'破棄増加', CRC_UP:'CRCエラー増加',
+  STP_TCN_STORM:'STPトポロジ変更が多発', MTU_1400:'MTU 1400', BW_HIGH:'帯域逼迫', PMTUD_BLOCKED:'PMTUD遮断',
+  OK_LATENCY:'成功（遅延あり）', STOP_AT_R2:'R2で停止', TO_R1_STAR:'R1まで到達・以降応答なし',
+  IF_DOWN:'IFダウン', DENY:'denyログあり', WRONG_GW:'ゲートウェイ誤り' };
 const TOOL_JA = { ping:'PING', traceroute:'TRACEROUTE', dns:'DNS', snmp:'SNMP', tcp:'TCP', log:'LOG' };
 
 let cur = null, answerId = null;

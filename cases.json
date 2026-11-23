@@ -474,6 +474,566 @@
     "r3",
     "r4"
    ]
+  },
+  {
+   "id": "case4",
+   "level": 4,
+   "title": "月曜の朝、全部重い",
+   "budget": 6,
+   "symptom": "月曜の朝から社内全体が断続的に重く、接続が切れる。特定のサーバだけではなく、ping の損失も大きい。週末に SW3 の配線作業があった。",
+   "topology": {
+    "nodes": [
+     {
+      "id": "PC1",
+      "x": 10,
+      "y": 14
+     },
+     {
+      "id": "SW1",
+      "x": 32,
+      "y": 26
+     },
+     {
+      "id": "SW2",
+      "x": 58,
+      "y": 26
+     },
+     {
+      "id": "SW3",
+      "x": 45,
+      "y": 48
+     },
+     {
+      "id": "PC2",
+      "x": 74,
+      "y": 48
+     },
+     {
+      "id": "SRV1",
+      "x": 85,
+      "y": 14
+     }
+    ],
+    "edges": [
+     [
+      "PC1",
+      "SW1"
+     ],
+     [
+      "SW1",
+      "SW2"
+     ],
+     [
+      "SW1",
+      "SW3"
+     ],
+     [
+      "SW3",
+      "SW2"
+     ],
+     [
+      "SW3",
+      "PC2"
+     ],
+     [
+      "SW2",
+      "SRV1"
+     ]
+    ]
+   },
+   "candidates": [
+    {
+     "id": "c4_1",
+     "label": "L2 ループ（SW3 の STP 無効化と二重接続）",
+     "answer": true
+    },
+    {
+     "id": "c4_2",
+     "label": "SW1–SW2 リンクの輻輳"
+    },
+    {
+     "id": "c4_3",
+     "label": "SRV1 の NIC 障害（エラー多発）"
+    },
+    {
+     "id": "c4_4",
+     "label": "SW2 の装置異常（CPU 高負荷）"
+    },
+    {
+     "id": "c4_5",
+     "label": "PC2 の NIC チーミング誤設定（同一 MAC の二重接続）"
+    }
+   ],
+   "observations": [
+    {
+     "id": "s1",
+     "tool": "ping",
+     "label": "ping PC1→SRV1（連続）",
+     "cost": 1,
+     "results": {
+      "c4_1": "LOSS_HEAVY",
+      "c4_2": "LOSS_LATENCY",
+      "c4_3": "LOSS_MID",
+      "c4_4": "LOSS_MID",
+      "c4_5": "LOSS_HEAVY"
+     },
+     "display": "損失 45%（断続的にタイムアウト）"
+    },
+    {
+     "id": "s2",
+     "tool": "snmp",
+     "label": "SNMP SW1（ブロードキャスト受信カウンタ）",
+     "cost": 1,
+     "results": {
+      "c4_1": "BCAST_EXTREME",
+      "c4_2": "NORMAL",
+      "c4_3": "NORMAL",
+      "c4_4": "NORMAL",
+      "c4_5": "BCAST_EXTREME"
+     },
+     "display": "ブロードキャスト受信が通常の約40倍"
+    },
+    {
+     "id": "s3",
+     "tool": "snmp",
+     "label": "SNMP SW3（MAC テーブル）",
+     "cost": 1,
+     "results": {
+      "c4_1": "MAC_FLAP",
+      "c4_2": "NORMAL",
+      "c4_3": "NORMAL",
+      "c4_4": "NORMAL",
+      "c4_5": "MAC_FLAP"
+     },
+     "display": "同一 MAC が SW3 の複数ポートに交互に出現（MAC フラッピング）"
+    },
+    {
+     "id": "s4",
+     "tool": "snmp",
+     "label": "SNMP SW2（CPU・IF エラー）",
+     "cost": 1,
+     "results": {
+      "c4_1": "CPU_HIGH",
+      "c4_2": "DISCARD_UP",
+      "c4_3": "CRC_UP",
+      "c4_4": "CPU_95",
+      "c4_5": "CPU_HIGH"
+     },
+     "display": "CPU 82%（ストーム処理で上昇）、IF エラーは目立たない"
+    },
+    {
+     "id": "s5",
+     "tool": "log",
+     "label": "SW3 ログ（STP）",
+     "cost": 2,
+     "results": {
+      "c4_1": "STP_TCN_STORM",
+      "c4_2": "NONE",
+      "c4_3": "NONE",
+      "c4_4": "NONE",
+      "c4_5": "NONE"
+     },
+     "display": "Topology Change が 1分に 200 件超／STP 無効化ポートの警告あり"
+    }
+   ],
+   "optimal": [
+    "s5"
+   ],
+   "explanation": {
+    "evidence_chain": [
+     "s2: ブロードキャストが通常の約40倍 ＝ ストームが発生している",
+     "s3: MAC フラッピングは、同一 MAC が複数の経路から届いている証拠",
+     "s5: STP の Topology Change 多発と無効化ポートの警告で、ループと確定"
+    ],
+    "teaching": "ブロードキャスト増だけでは暴走端末（c4_5）と区別できない。フラッピング＋STP ログで「ループ」と「単一端末の二重接続」を切り分ける。最短はログ単独だが、現場では s2→s3 で当たりを付けてからログで確定させる。"
+   }
+  },
+  {
+   "id": "case5",
+   "level": 5,
+   "title": "小さい画面は開くのに",
+   "budget": 6,
+   "symptom": "拠点から本社ポータルの軽いページは開けるが、大きな画像やファイルのダウンロードが途中で止まる。ping は正常。経路には VPN トンネルがある。",
+   "topology": {
+    "nodes": [
+     {
+      "id": "PC1",
+      "x": 10,
+      "y": 30
+     },
+     {
+      "id": "SW1",
+      "x": 28,
+      "y": 30
+     },
+     {
+      "id": "R1",
+      "x": 46,
+      "y": 30
+     },
+     {
+      "id": "R2",
+      "x": 66,
+      "y": 30
+     },
+     {
+      "id": "SRV1",
+      "x": 86,
+      "y": 30
+     }
+    ],
+    "edges": [
+     [
+      "PC1",
+      "SW1"
+     ],
+     [
+      "SW1",
+      "R1"
+     ],
+     [
+      "R1",
+      "R2"
+     ],
+     [
+      "R2",
+      "SRV1"
+     ]
+    ]
+   },
+   "candidates": [
+    {
+     "id": "c5_1",
+     "label": "MTU ブラックホール（トンネル MTU 1400＋PMTUD 遮断）",
+     "answer": true
+    },
+    {
+     "id": "c5_2",
+     "label": "SRV1 の性能問題（TCP 再送の多発）"
+    },
+    {
+     "id": "c5_3",
+     "label": "WAN 回線の輻輳（帯域不足）"
+    },
+    {
+     "id": "c5_4",
+     "label": "FW が断片化パケットを破棄"
+    },
+    {
+     "id": "c5_5",
+     "label": "SW1–R1 リンクの CRC エラー"
+    }
+   ],
+   "observations": [
+    {
+     "id": "t1",
+     "tool": "ping",
+     "label": "ping PC1→SRV1（標準サイズ）",
+     "cost": 1,
+     "results": {
+      "c5_1": "OK",
+      "c5_2": "OK",
+      "c5_3": "OK",
+      "c5_4": "OK",
+      "c5_5": "OK"
+     },
+     "display": "応答あり — 損失 0%"
+    },
+    {
+     "id": "t2",
+     "tool": "ping",
+     "label": "ping PC1→SRV1（1472B, DF）",
+     "cost": 1,
+     "results": {
+      "c5_1": "FAIL",
+      "c5_2": "OK_LATENCY",
+      "c5_3": "OK_LATENCY",
+      "c5_4": "OK",
+      "c5_5": "FAIL"
+     },
+     "display": "応答なし — 4/4 ロスト"
+    },
+    {
+     "id": "t3",
+     "tool": "ping",
+     "label": "ping PC1→SRV1（1400B, DF）",
+     "cost": 1,
+     "results": {
+      "c5_1": "OK",
+      "c5_2": "OK_LATENCY",
+      "c5_3": "OK_LATENCY",
+      "c5_4": "OK",
+      "c5_5": "FAIL"
+     },
+     "display": "応答あり — 損失 0%"
+    },
+    {
+     "id": "t4",
+     "tool": "snmp",
+     "label": "SNMP R1（トンネル IF）",
+     "cost": 1,
+     "results": {
+      "c5_1": "MTU_1400",
+      "c5_2": "NORMAL",
+      "c5_3": "BW_HIGH",
+      "c5_4": "MTU_1400",
+      "c5_5": "NORMAL"
+     },
+     "display": "トンネル IF: MTU 1400（使用率は通常）"
+    },
+    {
+     "id": "t5",
+     "tool": "snmp",
+     "label": "SNMP SW1（R1 向けポート）",
+     "cost": 1,
+     "results": {
+      "c5_1": "NORMAL",
+      "c5_2": "NORMAL",
+      "c5_3": "NORMAL",
+      "c5_4": "NORMAL",
+      "c5_5": "CRC_UP"
+     },
+     "display": "CRC エラーなし"
+    },
+    {
+     "id": "t6",
+     "tool": "log",
+     "label": "R1 ログ（ICMP）",
+     "cost": 2,
+     "results": {
+      "c5_1": "PMTUD_BLOCKED",
+      "c5_2": "NONE",
+      "c5_3": "NONE",
+      "c5_4": "NONE",
+      "c5_5": "NONE"
+     },
+     "display": "ICMP fragmentation needed の返送が FW ポリシーで遮断されている記録"
+    }
+   ],
+   "optimal": [
+    "t2",
+    "t3"
+   ],
+   "explanation": {
+    "evidence_chain": [
+     "t2/t3: 1472B は全滅、1400B は正常 ＝ サイズの閾値で落ちる。これは CRC（t3 でも落ちる）とは違う MTU の署名",
+     "t4: トンネル IF の MTU は 1400。1400B が通って 1472B が落ちる事実と一致する",
+     "t6: PMTUD の ICMP が遮断され、送信側が MTU を学習できないため再送が繰り返される"
+    ],
+    "teaching": "サイズを振る ping（サイズスイープ）が MTU 診断の決定打。『小さい通信は通るのに大きい通信だけ止まる』は、輻輳や回線エラーと分けて考える。"
+   }
+  },
+  {
+   "id": "case6",
+   "level": 5,
+   "title": "拠点からだけ届かない",
+   "budget": 8,
+   "symptom": "拠点の PC2 から本社 SRV1 に届かない。本社 PC1 から SRV1 は正常で、PC2 から拠点内の SRV2 も正常。",
+   "topology": {
+    "nodes": [
+     {
+      "id": "PC1",
+      "x": 10,
+      "y": 12
+     },
+     {
+      "id": "R1",
+      "x": 34,
+      "y": 26
+     },
+     {
+      "id": "SRV1",
+      "x": 12,
+      "y": 46
+     },
+     {
+      "id": "R2",
+      "x": 62,
+      "y": 26
+     },
+     {
+      "id": "PC2",
+      "x": 86,
+      "y": 12
+     },
+     {
+      "id": "SRV2",
+      "x": 86,
+      "y": 46
+     }
+    ],
+    "edges": [
+     [
+      "PC1",
+      "R1"
+     ],
+     [
+      "R1",
+      "SRV1"
+     ],
+     [
+      "R1",
+      "R2"
+     ],
+     [
+      "R2",
+      "PC2"
+     ],
+     [
+      "R2",
+      "SRV2"
+     ]
+    ]
+   },
+   "candidates": [
+    {
+     "id": "c6_1",
+     "label": "R2 のデフォルトルート誤設定（誤ったネクストホップ）",
+     "answer": true
+    },
+    {
+     "id": "c6_2",
+     "label": "R1 に拠点向け経路が欠落（戻り経路なし）"
+    },
+    {
+     "id": "c6_3",
+     "label": "R1–R2 リンク障害"
+    },
+    {
+     "id": "c6_4",
+     "label": "R1 の ACL が拠点→SRV1 を遮断"
+    },
+    {
+     "id": "c6_5",
+     "label": "SRV1 のデフォルトゲートウェイ誤り"
+    }
+   ],
+   "observations": [
+    {
+     "id": "u1",
+     "tool": "ping",
+     "label": "ping PC2→SRV1",
+     "cost": 1,
+     "results": {
+      "c6_1": "FAIL",
+      "c6_2": "FAIL",
+      "c6_3": "FAIL",
+      "c6_4": "FAIL",
+      "c6_5": "FAIL"
+     },
+     "display": "応答なし"
+    },
+    {
+     "id": "u2",
+     "tool": "ping",
+     "label": "ping PC2→R1",
+     "cost": 1,
+     "results": {
+      "c6_1": "FAIL",
+      "c6_2": "FAIL",
+      "c6_3": "FAIL",
+      "c6_4": "OK",
+      "c6_5": "OK"
+     },
+     "display": "応答なし"
+    },
+    {
+     "id": "u3",
+     "tool": "ping",
+     "label": "ping PC1→PC2",
+     "cost": 1,
+     "results": {
+      "c6_1": "FAIL",
+      "c6_2": "FAIL",
+      "c6_3": "FAIL",
+      "c6_4": "OK",
+      "c6_5": "OK"
+     },
+     "display": "応答なし"
+    },
+    {
+     "id": "u4",
+     "tool": "traceroute",
+     "label": "traceroute PC2→SRV1",
+     "cost": 1,
+     "results": {
+      "c6_1": "STOP_AT_R2",
+      "c6_2": "TO_R1_STAR",
+      "c6_3": "STOP_AT_R2",
+      "c6_4": "TO_R1_STAR",
+      "c6_5": "TO_R1_STAR"
+     },
+     "display": "1 ホップ目 R2 で停止、以降は応答なし"
+    },
+    {
+     "id": "u5",
+     "tool": "snmp",
+     "label": "SNMP R2（IF・経路要約）",
+     "cost": 1,
+     "results": {
+      "c6_1": "NORMAL",
+      "c6_2": "NORMAL",
+      "c6_3": "IF_DOWN",
+      "c6_4": "NORMAL",
+      "c6_5": "NORMAL"
+     },
+     "display": "デフォルトルートあり／R1 向け IF は up（見かけは正常）"
+    },
+    {
+     "id": "u6",
+     "tool": "log",
+     "label": "R1 ログ（deny）",
+     "cost": 2,
+     "results": {
+      "c6_1": "NONE",
+      "c6_2": "NONE",
+      "c6_3": "NONE",
+      "c6_4": "DENY",
+      "c6_5": "NONE"
+     },
+     "display": "該当する deny ログなし"
+    },
+    {
+     "id": "u7",
+     "tool": "ping",
+     "label": "ping PC1→SRV1（本社内の対照）",
+     "cost": 1,
+     "results": {
+      "c6_1": "OK",
+      "c6_2": "OK",
+      "c6_3": "OK",
+      "c6_4": "OK",
+      "c6_5": "OK"
+     },
+     "display": "応答あり（本社内は正常）"
+    },
+    {
+     "id": "u8",
+     "tool": "snmp",
+     "label": "SNMP SRV1（ゲートウェイ設定）",
+     "cost": 1,
+     "results": {
+      "c6_1": "NORMAL",
+      "c6_2": "NORMAL",
+      "c6_3": "NORMAL",
+      "c6_4": "NORMAL",
+      "c6_5": "WRONG_GW"
+     },
+     "display": "SRV1 のゲートウェイ設定は正常"
+    }
+   ],
+   "optimal": [
+    "u4",
+    "u5"
+   ],
+   "explanation": {
+    "evidence_chain": [
+     "u4: traceroute が R2 で止まる ＝ パケットは拠点を出られていない。戻り経路や SRV1 側の問題ではない",
+     "u5: R1 向け IF は up でリンク障害でもない。それでも R2 で止まるなら、残るは R2 の経路選択そのもの",
+     "確定診断: R2 のデフォルトルートのネクストホップが、廃止済みのアドレスを向いていた"
+    ],
+    "teaching": "『どこで止まるか』を traceroute で押さえると、往路の問題か戻りの問題かが分かれる。ping の成否だけでは往路・戻りの区別がつかない。"
+   }
   }
  ],
  "note": "結果は候補ごとに定義する。検証器は (1) 全候補の署名の一意性 (2) 予算内で正解を一意化できる観測集合の存在 (3) 全ダミー候補の否定可能性 を検査する。",

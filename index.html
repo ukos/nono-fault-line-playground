@@ -19,16 +19,26 @@
   #btn-start{ display:inline-block; background:var(--cy); color:#04121f; border:none; border-radius:12px;
     padding:16px 42px; font-size:18px; font-weight:800; letter-spacing:.06em; cursor:pointer; font-family:inherit; box-shadow:0 0 22px rgba(53,200,255,.35); }
   #btn-start:active{ transform:translateY(1px); }
+  /* 横向き: ロゴを左、メニュー（メッセージ＋ボタン）を右に並べる */
+  @media (orientation: landscape) and (max-height: 560px){
+    #screen-title{ display:flex; align-items:center; justify-content:center; gap:30px;
+      min-height:100dvh; padding:12px 22px; }
+    #screen-title img.logo{ width:auto; height:min(84vh,430px); max-height:84vh; flex:0 0 auto; }
+    #screen-title .side{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+    .tagline{ margin:0 0 24px; }
+  }
 </style>
 </head>
 <body>
 <div id="screen-title">
   <img class="logo" src="logo.jpg" alt="FAULT LINE — DESTINATION: INVESTIGATION">
-  <div class="tagline">
-    <div class="l1">ネットワーク障害診断パズル</div>
-    <div class="l2">観測し、消去し、特定せよ</div>
+  <div class="side">
+    <div class="tagline">
+      <div class="l1">ネットワーク障害診断パズル</div>
+      <div class="l2">観測し、消去し、特定せよ</div>
+    </div>
+    <button id="btn-start">▶ シナリオを選ぶ</button>
   </div>
-  <button id="btn-start">▶ シナリオを選ぶ</button>
 </div>
 <script>
   document.getElementById('btn-start').onclick = () => location.href = 'select.html';
