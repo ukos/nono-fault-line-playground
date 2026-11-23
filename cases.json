@@ -1783,6 +1783,1318 @@
     ],
     "teaching": "症状が2系統あるとき、単一障害で全部を説明しようとしない。各系統の証拠を別々に集めると、同時に起きた別の障害が見えてくる。"
    }
+  },
+  {
+   "id": "case11",
+   "level": 4,
+   "title": "引っ越した部署だけつながらない",
+   "budget": 6,
+   "symptom": "席替えで移動した部署の端末だけ、社内サーバに届かない。リンクは上がっている。移動していない部署は正常。週末にネットワークの配線・設定作業があった。",
+   "topology": {
+    "nodes": [
+     {
+      "id": "PC1",
+      "x": 10,
+      "y": 16
+     },
+     {
+      "id": "PC2",
+      "x": 10,
+      "y": 44
+     },
+     {
+      "id": "SW1",
+      "x": 32,
+      "y": 30
+     },
+     {
+      "id": "SW2",
+      "x": 58,
+      "y": 30
+     },
+     {
+      "id": "SRV1",
+      "x": 84,
+      "y": 30
+     }
+    ],
+    "edges": [
+     [
+      "PC1",
+      "SW1"
+     ],
+     [
+      "PC2",
+      "SW1"
+     ],
+     [
+      "SW1",
+      "SW2"
+     ],
+     [
+      "SW2",
+      "SRV1"
+     ]
+    ]
+   },
+   "candidates": [
+    {
+     "id": "c11_1",
+     "label": "トランクの allowed VLAN 漏れ（その VLAN が対向へ通らない）",
+     "answer": true
+    },
+    {
+     "id": "c11_2",
+     "label": "PC1 ポートの VLAN 割当ミス"
+    },
+    {
+     "id": "c11_3",
+     "label": "SRV1 側 ACL がその部署を遮断"
+    },
+    {
+     "id": "c11_4",
+     "label": "PC1 のデフォルトゲートウェイ誤り"
+    },
+    {
+     "id": "c11_5",
+     "label": "STP がその VLAN をブロック"
+    }
+   ],
+   "observations": [
+    {
+     "id": "z1",
+     "tool": "ping",
+     "label": "ping PC1→デフォルトゲートウェイ",
+     "cost": 1,
+     "results": {
+      "c11_1": "FAIL",
+      "c11_2": "FAIL",
+      "c11_3": "OK",
+      "c11_4": "FAIL",
+      "c11_5": "FAIL"
+     },
+     "display": "応答なし"
+    },
+    {
+     "id": "z2",
+     "tool": "ping",
+     "label": "ping PC1→PC2（他部署）",
+     "cost": 1,
+     "results": {
+      "c11_1": "FAIL",
+      "c11_2": "FAIL",
+      "c11_3": "OK",
+      "c11_4": "FAIL",
+      "c11_5": "FAIL"
+     },
+     "display": "応答なし"
+    },
+    {
+     "id": "z3",
+     "tool": "snmp",
+     "label": "SNMP SW1（PC1 ポートの VLAN）",
+     "cost": 1,
+     "results": {
+      "c11_1": "NORMAL",
+      "c11_2": "VLAN_WRONG",
+      "c11_3": "NORMAL",
+      "c11_4": "NORMAL",
+      "c11_5": "NORMAL"
+     },
+     "display": "PC1 ポートの VLAN は想定どおり"
+    },
+    {
+     "id": "z4",
+     "tool": "snmp",
+     "label": "SNMP SW2（トランク受信フレーム）",
+     "cost": 1,
+     "results": {
+      "c11_1": "NOT_ARRIVING",
+      "c11_2": "WRONG_VLAN_FRAMES",
+      "c11_3": "NORMAL",
+      "c11_4": "NORMAL",
+      "c11_5": "NOT_ARRIVING"
+     },
+     "display": "対象 VLAN のフレームが SW2 に届いていない"
+    },
+    {
+     "id": "z5",
+     "tool": "snmp",
+     "label": "SNMP SW1（その VLAN の STP 状態）",
+     "cost": 1,
+     "results": {
+      "c11_1": "NORMAL",
+      "c11_2": "NORMAL",
+      "c11_3": "NORMAL",
+      "c11_4": "NORMAL",
+      "c11_5": "BLOCKING"
+     },
+     "display": "STP は転送状態（ブロックされていない）"
+    },
+    {
+     "id": "z6",
+     "tool": "log",
+     "label": "SW1 ログ（設定変更）",
+     "cost": 2,
+     "results": {
+      "c11_1": "CHANGE_LOG",
+      "c11_2": "NONE",
+      "c11_3": "NONE",
+      "c11_4": "NONE",
+      "c11_5": "NONE"
+     },
+     "display": "週末にトランクの allowed VLAN を編集した変更記録"
+    }
+   ],
+   "optimal": [
+    "z4",
+    "z5"
+   ],
+   "explanation": {
+    "evidence_chain": [
+     "z4: 対象 VLAN のフレームが対向スイッチに届いていない ＝ 途中のトランクで落ちている",
+     "z5: STP はブロックしていない ＝ 残るはトランクの許可設定そのもの",
+     "z6: 週末の変更で allowed VLAN から漏れたことが裏付けられる"
+    ],
+    "teaching": "VLAN の障害は「ポートの割当」と「トランクの許可」を分けて見る。フレームが対向に届いているかどうかが、切り分けの起点になる。"
+   }
+  },
+  {
+   "id": "case12",
+   "level": 5,
+   "title": "ある朝から警告が出る",
+   "budget": 5,
+   "symptom": "社内ポータル（https）を開くと、全端末で証明書の警告が出るようになった。昨日までは出なかった。ping や他のサイトは正常。",
+   "topology": {
+    "nodes": [
+     {
+      "id": "PC1",
+      "x": 12,
+      "y": 30
+     },
+     {
+      "id": "SW1",
+      "x": 32,
+      "y": 30
+     },
+     {
+      "id": "R1",
+      "x": 54,
+      "y": 30
+     },
+     {
+      "id": "SRV1",
+      "x": 80,
+      "y": 30
+     }
+    ],
+    "edges": [
+     [
+      "PC1",
+      "SW1"
+     ],
+     [
+      "SW1",
+      "R1"
+     ],
+     [
+      "R1",
+      "SRV1"
+     ]
+    ]
+   },
+   "candidates": [
+    {
+     "id": "c12_1",
+     "label": "サーバ証明書の有効期限切れ",
+     "answer": true
+    },
+    {
+     "id": "c12_2",
+     "label": "中間証明書の欠落（チェーン不完全）"
+    },
+    {
+     "id": "c12_3",
+     "label": "端末側の時刻ずれ（検証が失敗）"
+    },
+    {
+     "id": "c12_4",
+     "label": "証明書の名前不一致（SAN がホスト名と違う）"
+    },
+    {
+     "id": "c12_5",
+     "label": "TLS の暗号スイート不一致（古い端末側の問題）"
+    }
+   ],
+   "observations": [
+    {
+     "id": "a1",
+     "tool": "tcp",
+     "label": "対照テスト（別の https サイト）",
+     "cost": 1,
+     "results": {
+      "c12_1": "OK",
+      "c12_2": "OK",
+      "c12_3": "WARN",
+      "c12_4": "OK",
+      "c12_5": "OK"
+     },
+     "display": "別のサイトでは警告なし"
+    },
+    {
+     "id": "a2",
+     "tool": "tcp",
+     "label": "証明書の確認（PC1 から SRV1 の証明書を見る）",
+     "cost": 1,
+     "results": {
+      "c12_1": "EXPIRED",
+      "c12_2": "VALID",
+      "c12_3": "EXPIRED",
+      "c12_4": "VALID",
+      "c12_5": "VALID"
+     },
+     "display": "証明書の有効期限が切れていると表示される"
+    },
+    {
+     "id": "a3",
+     "tool": "snmp",
+     "label": "端末時刻の確認（PC1 と NTP の比較）",
+     "cost": 1,
+     "results": {
+      "c12_1": "NORMAL",
+      "c12_2": "NORMAL",
+      "c12_3": "SKEW",
+      "c12_4": "NORMAL",
+      "c12_5": "NORMAL"
+     },
+     "display": "PC1 の時刻は正常"
+    },
+    {
+     "id": "a4",
+     "tool": "tcp",
+     "label": "証明書の名前・チェーン確認",
+     "cost": 1,
+     "results": {
+      "c12_1": "OK",
+      "c12_2": "CHAIN",
+      "c12_3": "OK",
+      "c12_4": "NAME",
+      "c12_5": "OK"
+     },
+     "display": "名前とチェーンは正常"
+    },
+    {
+     "id": "a5",
+     "tool": "log",
+     "label": "SRV1 ログ（証明書まわりの作業）",
+     "cost": 2,
+     "results": {
+      "c12_1": "NONE",
+      "c12_2": "CHANGE",
+      "c12_3": "NONE",
+      "c12_4": "NONE",
+      "c12_5": "NONE"
+     },
+     "display": "該当する作業記録なし"
+    }
+   ],
+   "optimal": [
+    "a2",
+    "a3"
+   ],
+   "explanation": {
+    "evidence_chain": [
+     "a2: 端末から見ると証明書は期限切れに見える。ただし端末の時計が狂っていても同じ見え方になる",
+     "a3: PC1 の時刻は正常 ＝ 見かけではなく、証明書そのものが切れている",
+     "a1: 他のサイトは正常 ＝ 問題はこのサーバの証明書に限定される"
+    ],
+    "teaching": "「期限切れに見える」と「実際に切れている」は別。観測する側（端末）の時刻を疑うのが、証明書診断の型。"
+   }
+  },
+  {
+   "id": "case13",
+   "level": 7,
+   "title": "拠点の経路だけ消えた",
+   "budget": 7,
+   "symptom": "本社から拠点セグメントへの経路が消え、届かなくなった。リンクはすべて up。拠点との間は OSPF で経路交換している。",
+   "topology": {
+    "nodes": [
+     {
+      "id": "PC1",
+      "x": 8,
+      "y": 14
+     },
+     {
+      "id": "R1",
+      "x": 26,
+      "y": 28
+     },
+     {
+      "id": "SRV1",
+      "x": 8,
+      "y": 44
+     },
+     {
+      "id": "R2",
+      "x": 50,
+      "y": 28
+     },
+     {
+      "id": "R3",
+      "x": 74,
+      "y": 28
+     },
+     {
+      "id": "PC2",
+      "x": 92,
+      "y": 28
+     }
+    ],
+    "edges": [
+     [
+      "PC1",
+      "R1"
+     ],
+     [
+      "SRV1",
+      "R1"
+     ],
+     [
+      "R1",
+      "R2"
+     ],
+     [
+      "R2",
+      "R3"
+     ],
+     [
+      "R3",
+      "PC2"
+     ]
+    ]
+   },
+   "candidates": [
+    {
+     "id": "c13_1",
+     "label": "OSPF ネイバー断絶（R2–R3 の認証キー不一致）",
+     "answer": true
+    },
+    {
+     "id": "c13_2",
+     "label": "R2–R3 リンクの物理障害"
+    },
+    {
+     "id": "c13_3",
+     "label": "R3 の OSPF プロセス停止"
+    },
+    {
+     "id": "c13_4",
+     "label": "エリア設定の誤り（R3 が別エリア）"
+    },
+    {
+     "id": "c13_5",
+     "label": "R1 の経路フィルタが拠点経路を遮断"
+    }
+   ],
+   "observations": [
+    {
+     "id": "b1",
+     "tool": "ping",
+     "label": "ping R1→R3（管理アドレス）",
+     "cost": 1,
+     "results": {
+      "c13_1": "FAIL",
+      "c13_2": "FAIL",
+      "c13_3": "FAIL",
+      "c13_4": "FAIL",
+      "c13_5": "OK"
+     },
+     "display": "応答なし"
+    },
+    {
+     "id": "b2",
+     "tool": "snmp",
+     "label": "SNMP R2（R3 向けリンク状態）",
+     "cost": 1,
+     "results": {
+      "c13_1": "UP",
+      "c13_2": "LINK_ERR",
+      "c13_3": "UP",
+      "c13_4": "UP",
+      "c13_5": "UP"
+     },
+     "display": "リンクは up/up（エラーなし）"
+    },
+    {
+     "id": "b3",
+     "tool": "snmp",
+     "label": "SNMP R2（OSPF ネイバー状態）",
+     "cost": 1,
+     "results": {
+      "c13_1": "DOWN",
+      "c13_2": "DOWN",
+      "c13_3": "DOWN",
+      "c13_4": "DOWN",
+      "c13_5": "NEIGHBOR_FULL"
+     },
+     "display": "R3 とのネイバーが確立していない"
+    },
+    {
+     "id": "b4",
+     "tool": "log",
+     "label": "R2 ログ（OSPF）",
+     "cost": 2,
+     "results": {
+      "c13_1": "AUTH_LOG",
+      "c13_2": "NONE",
+      "c13_3": "NONE",
+      "c13_4": "AREA_LOG",
+      "c13_5": "NONE"
+     },
+     "display": "OSPF 認証エラーのログが継続している"
+    },
+    {
+     "id": "b5",
+     "tool": "snmp",
+     "label": "SNMP R3（OSPF プロセス）",
+     "cost": 1,
+     "results": {
+      "c13_1": "PROC_UP",
+      "c13_2": "PROC_UP",
+      "c13_3": "PROC_DOWN",
+      "c13_4": "PROC_UP",
+      "c13_5": "PROC_UP"
+     },
+     "display": "R3 の OSPF プロセスは動作中"
+    },
+    {
+     "id": "b6",
+     "tool": "traceroute",
+     "label": "traceroute PC1→PC2",
+     "cost": 1,
+     "results": {
+      "c13_1": "STOP_R2",
+      "c13_2": "STOP_R2",
+      "c13_3": "STOP_R2",
+      "c13_4": "STOP_R2",
+      "c13_5": "STOP_R1"
+     },
+     "display": "R2 で停止"
+    }
+   ],
+   "optimal": [
+    "b4"
+   ],
+   "explanation": {
+    "evidence_chain": [
+     "b3: リンクは up なのにネイバーが立っていない ＝ 物理ではなくプロトコルの問題",
+     "b5: 相手のプロセスは動いている ＝ Hello の中身（認証・エリア）の不一致が残る",
+     "b4: 認証エラーのログで、片側だけキーが変わったことが確定する"
+    ],
+    "teaching": "動的ルーティングでは「リンクが up」と「経路がある」の間にネイバー確立がある。ネイバーの状態を見てから、理由をログで確定させる。"
+   }
+  },
+  {
+   "id": "case14",
+   "level": 6,
+   "title": "社外にだけ出られない",
+   "budget": 6,
+   "symptom": "社内から社外（インターネット）への接続が確立しない。社内システムは正常。数日前から断続的に発生し、今日はほぼ全滅している。",
+   "topology": {
+    "nodes": [
+     {
+      "id": "PC1",
+      "x": 12,
+      "y": 30
+     },
+     {
+      "id": "SW1",
+      "x": 32,
+      "y": 30
+     },
+     {
+      "id": "FW1",
+      "x": 56,
+      "y": 30
+     },
+     {
+      "id": "EXT1",
+      "x": 84,
+      "y": 30
+     }
+    ],
+    "edges": [
+     [
+      "PC1",
+      "SW1"
+     ],
+     [
+      "SW1",
+      "FW1"
+     ],
+     [
+      "FW1",
+      "EXT1"
+     ]
+    ]
+   },
+   "candidates": [
+    {
+     "id": "c14_1",
+     "label": "NAT テーブル枯渇（変換セッションが上限）",
+     "answer": true
+    },
+    {
+     "id": "c14_2",
+     "label": "FW1 のポリシー変更で社外通信が遮断"
+    },
+    {
+     "id": "c14_3",
+     "label": "回線事業者側の障害"
+    },
+    {
+     "id": "c14_4",
+     "label": "DNS 障害（名前が引けず出られないように見える）"
+    },
+    {
+     "id": "c14_5",
+     "label": "プロキシサーバの停止"
+    }
+   ],
+   "observations": [
+    {
+     "id": "d1",
+     "tool": "ping",
+     "label": "ping PC1→EXT1（IP 直指定）",
+     "cost": 1,
+     "results": {
+      "c14_1": "FAIL",
+      "c14_2": "FAIL",
+      "c14_3": "FAIL",
+      "c14_4": "OK",
+      "c14_5": "OK"
+     },
+     "display": "応答なし"
+    },
+    {
+     "id": "d2",
+     "tool": "dns",
+     "label": "DNS クエリ（外部の名前）",
+     "cost": 1,
+     "results": {
+      "c14_1": "OK",
+      "c14_2": "OK",
+      "c14_3": "OK",
+      "c14_4": "FAIL",
+      "c14_5": "OK"
+     },
+     "display": "正常に引ける"
+    },
+    {
+     "id": "d3",
+     "tool": "tcp",
+     "label": "TCP疎通 PC1→EXT1:443（直接）",
+     "cost": 1,
+     "results": {
+      "c14_1": "FAIL",
+      "c14_2": "FAIL",
+      "c14_3": "FAIL",
+      "c14_4": "OK",
+      "c14_5": "OK"
+     },
+     "display": "タイムアウト"
+    },
+    {
+     "id": "d4",
+     "tool": "snmp",
+     "label": "SNMP FW1（NAT セッション使用率）",
+     "cost": 1,
+     "results": {
+      "c14_1": "HIGH",
+      "c14_2": "NORMAL",
+      "c14_3": "NORMAL",
+      "c14_4": "NORMAL",
+      "c14_5": "HIGH"
+     },
+     "display": "NAT セッション使用率 99%（上限付近）"
+    },
+    {
+     "id": "d5",
+     "tool": "log",
+     "label": "FW1 ログ",
+     "cost": 2,
+     "results": {
+      "c14_1": "POOL_FAIL",
+      "c14_2": "POLICY_CHANGE",
+      "c14_3": "NONE",
+      "c14_4": "NONE",
+      "c14_5": "NONE"
+     },
+     "display": "アドレスプール枯渇で新規変換に失敗したログが多数"
+    }
+   ],
+   "optimal": [
+    "d5"
+   ],
+   "explanation": {
+    "evidence_chain": [
+     "d1/d2: IP 直指定でも届かず、名前解決は正常 ＝ DNS ではなく転送側の問題",
+     "d4: NAT の使用率が上限付近。ただしプロキシ停止で直接接続が増えても使用率は上がる",
+     "d5: 新規変換の失敗ログで、枯渇そのものが確定する"
+    ],
+    "teaching": "「社外だけダメ」は DNS・回線・FW・NAT の順に疑う。使用率の高さは原因にも結果にもなるので、失敗のログで裏を取る。"
+   }
+  },
+  {
+   "id": "case15",
+   "level": 5,
+   "title": "突然ログインできなくなった",
+   "budget": 6,
+   "symptom": "朝からドメインにログインできない（認証エラーになる）。ファイルサーバへのアクセスも認証で弾かれる。ネットワーク自体はつながっている。",
+   "topology": {
+    "nodes": [
+     {
+      "id": "PC1",
+      "x": 12,
+      "y": 20
+     },
+     {
+      "id": "SW1",
+      "x": 34,
+      "y": 30
+     },
+     {
+      "id": "SRV1",
+      "x": 66,
+      "y": 16
+     },
+     {
+      "id": "NTP1",
+      "x": 66,
+      "y": 46
+     }
+    ],
+    "edges": [
+     [
+      "PC1",
+      "SW1"
+     ],
+     [
+      "SW1",
+      "SRV1"
+     ],
+     [
+      "SW1",
+      "NTP1"
+     ]
+    ]
+   },
+   "candidates": [
+    {
+     "id": "c15_1",
+     "label": "認証サーバの時刻ずれ（NTP 同期の失敗）",
+     "answer": true
+    },
+    {
+     "id": "c15_2",
+     "label": "認証サービスの停止"
+    },
+    {
+     "id": "c15_3",
+     "label": "PC1 側の時刻ずれ"
+    },
+    {
+     "id": "c15_4",
+     "label": "パスワードポリシーの変更"
+    },
+    {
+     "id": "c15_5",
+     "label": "認証ポートの通信遮断"
+    }
+   ],
+   "observations": [
+    {
+     "id": "e1",
+     "tool": "ping",
+     "label": "ping PC1→SRV1",
+     "cost": 1,
+     "results": {
+      "c15_1": "OK",
+      "c15_2": "OK",
+      "c15_3": "OK",
+      "c15_4": "OK",
+      "c15_5": "FAIL"
+     },
+     "display": "応答あり"
+    },
+    {
+     "id": "e2",
+     "tool": "tcp",
+     "label": "TCP疎通 PC1→SRV1:88（Kerberos）",
+     "cost": 1,
+     "results": {
+      "c15_1": "OK",
+      "c15_2": "FAIL",
+      "c15_3": "OK",
+      "c15_4": "OK",
+      "c15_5": "FAIL"
+     },
+     "display": "接続できる（認証の段階で弾かれる）"
+    },
+    {
+     "id": "e3",
+     "tool": "snmp",
+     "label": "端末時刻の確認（PC1 と NTP1 の比較）",
+     "cost": 1,
+     "results": {
+      "c15_1": "NORMAL",
+      "c15_2": "NORMAL",
+      "c15_3": "SKEW_PC",
+      "c15_4": "NORMAL",
+      "c15_5": "NORMAL"
+     },
+     "display": "PC1 の時刻は正常"
+    },
+    {
+     "id": "e4",
+     "tool": "snmp",
+     "label": "サーバ時刻の詳細確認（SRV1 と NTP1 の比較）",
+     "cost": 2,
+     "results": {
+      "c15_1": "SKEW_SRV",
+      "c15_2": "NORMAL",
+      "c15_3": "NORMAL",
+      "c15_4": "NORMAL",
+      "c15_5": "NORMAL"
+     },
+     "display": "SRV1 の時刻が 7 分進んでいる（NTP 同期が3日止まっている）"
+    },
+    {
+     "id": "e5",
+     "tool": "log",
+     "label": "SRV1 ログ（認証）",
+     "cost": 2,
+     "results": {
+      "c15_1": "SKEW_LOG",
+      "c15_2": "NONE",
+      "c15_3": "NONE",
+      "c15_4": "POLICY_CHANGE",
+      "c15_5": "NONE"
+     },
+     "display": "時刻不一致による認証拒否のログが多数"
+    }
+   ],
+   "optimal": [
+    "e4"
+   ],
+   "explanation": {
+    "evidence_chain": [
+     "e1/e2: 到達も接続もできるのに認証だけが失敗する ＝ 通信ではなく認証の前提が崩れている",
+     "e3: 端末の時刻は正常 ＝ ずれているのは端末側ではない",
+     "e4/e5: サーバの時刻がずれ、Kerberos が時刻不一致で拒否していた"
+    ],
+    "teaching": "認証の失敗は、まず時刻を疑う。Kerberos は数分のずれでも拒否する。到達性と認証は分けて診断する。"
+   }
+  },
+  {
+   "id": "case16",
+   "level": 7,
+   "title": "半分の人にだけエラー",
+   "budget": 7,
+   "symptom": "Web サービスで、アクセスの半分くらいがエラーになる。再読み込みすると直ることもある。全員に起きるが、毎回ではない。LB で2台に振り分けている。",
+   "topology": {
+    "nodes": [
+     {
+      "id": "PC1",
+      "x": 10,
+      "y": 30
+     },
+     {
+      "id": "SW1",
+      "x": 28,
+      "y": 30
+     },
+     {
+      "id": "LB1",
+      "x": 50,
+      "y": 30
+     },
+     {
+      "id": "SRV1",
+      "x": 76,
+      "y": 16
+     },
+     {
+      "id": "SRV2",
+      "x": 76,
+      "y": 46
+     }
+    ],
+    "edges": [
+     [
+      "PC1",
+      "SW1"
+     ],
+     [
+      "SW1",
+      "LB1"
+     ],
+     [
+      "LB1",
+      "SRV1"
+     ],
+     [
+      "LB1",
+      "SRV2"
+     ]
+    ]
+   },
+   "candidates": [
+    {
+     "id": "c16_1",
+     "label": "SRV2 のアプリ異常（ヘルスチェックをすり抜け）",
+     "answer": true
+    },
+    {
+     "id": "c16_2",
+     "label": "LB の振り分け設定ミス（存在しない対象が残っている）"
+    },
+    {
+     "id": "c16_3",
+     "label": "SRV1 の過負荷"
+    },
+    {
+     "id": "c16_4",
+     "label": "LB のセッション維持の不具合"
+    },
+    {
+     "id": "c16_5",
+     "label": "両サーバ共通の DB 障害（間欠）"
+    }
+   ],
+   "observations": [
+    {
+     "id": "f1",
+     "tool": "tcp",
+     "label": "HTTPS 取得テスト（10回）",
+     "cost": 1,
+     "results": {
+      "c16_1": "HALF_ERR",
+      "c16_2": "HALF_ERR",
+      "c16_3": "SLOW_MOSTLY",
+      "c16_4": "SESSION_ERR",
+      "c16_5": "HALF_ERR"
+     },
+     "display": "10回中5回がエラー"
+    },
+    {
+     "id": "f2",
+     "tool": "tcp",
+     "label": "個別テスト SRV1（直接アクセス）",
+     "cost": 1,
+     "results": {
+      "c16_1": "OK",
+      "c16_2": "OK",
+      "c16_3": "SLOW",
+      "c16_4": "OK",
+      "c16_5": "OK"
+     },
+     "display": "SRV1 は正常に応答"
+    },
+    {
+     "id": "f3",
+     "tool": "tcp",
+     "label": "個別テスト SRV2（直接アクセス）",
+     "cost": 1,
+     "results": {
+      "c16_1": "ERR",
+      "c16_2": "OK",
+      "c16_3": "OK",
+      "c16_4": "OK",
+      "c16_5": "ERR"
+     },
+     "display": "SRV2 はアプリエラーを返す"
+    },
+    {
+     "id": "f4",
+     "tool": "snmp",
+     "label": "SNMP LB1（ヘルスチェック状態）",
+     "cost": 1,
+     "results": {
+      "c16_1": "HC_UP",
+      "c16_2": "GHOST_MEMBER",
+      "c16_3": "HC_UP",
+      "c16_4": "HC_UP",
+      "c16_5": "HC_UP"
+     },
+     "display": "ヘルスチェックは両系とも UP（TCP ポート監視のみ）"
+    },
+    {
+     "id": "f5",
+     "tool": "log",
+     "label": "LB1 ログ（振り分け実績）",
+     "cost": 2,
+     "results": {
+      "c16_1": "ERR_ON_SRV2",
+      "c16_2": "NONE",
+      "c16_3": "NONE",
+      "c16_4": "SWITCH",
+      "c16_5": "ERR_BOTH"
+     },
+     "display": "エラーは SRV2 宛の振り分けに集中している"
+    },
+    {
+     "id": "f6",
+     "tool": "snmp",
+     "label": "SNMP SRV1（負荷）",
+     "cost": 1,
+     "results": {
+      "c16_1": "NORMAL",
+      "c16_2": "NORMAL",
+      "c16_3": "CPU_HIGH",
+      "c16_4": "NORMAL",
+      "c16_5": "NORMAL"
+     },
+     "display": "SRV1 の負荷は通常"
+    }
+   ],
+   "optimal": [
+    "f5"
+   ],
+   "explanation": {
+    "evidence_chain": [
+     "f1: 約半数がエラー ＝ 振り分け先の片系が怪しい",
+     "f3: SRV2 に直接アクセスしてもエラー ＝ LB ではなくサーバ側。ただし DB 起因でも同じ見え方になる",
+     "f5: エラーが SRV2 宛に集中 ＝ 共通の DB ではなく SRV2 そのもの。f4 のとおりヘルスチェックはポートしか見ていなかった"
+    ],
+    "teaching": "「半分だけ」は振り分けの偏りを疑う。ヘルスチェックが UP でもアプリが死んでいることはある。監視の粒度が診断の死角になる。"
+   }
+  },
+  {
+   "id": "case17",
+   "level": 6,
+   "title": "このサイトだけ開けない",
+   "budget": 7,
+   "symptom": "特定の外部サイトだけ開けない。他のサイトは正常。そのサイトは最近 IPv6 対応を始めたらしい。社内はデュアルスタック構成。",
+   "topology": {
+    "nodes": [
+     {
+      "id": "PC1",
+      "x": 12,
+      "y": 30
+     },
+     {
+      "id": "SW1",
+      "x": 32,
+      "y": 30
+     },
+     {
+      "id": "R1",
+      "x": 54,
+      "y": 30
+     },
+     {
+      "id": "SRV1",
+      "x": 80,
+      "y": 30
+     }
+    ],
+    "edges": [
+     [
+      "PC1",
+      "SW1"
+     ],
+     [
+      "SW1",
+      "R1"
+     ],
+     [
+      "R1",
+      "SRV1"
+     ]
+    ]
+   },
+   "candidates": [
+    {
+     "id": "c17_1",
+     "label": "IPv6 の経路欠落（AAAA を優先して失敗）",
+     "answer": true
+    },
+    {
+     "id": "c17_2",
+     "label": "そのサイト側の障害"
+    },
+    {
+     "id": "c17_3",
+     "label": "DNS が誤った AAAA を返す"
+    },
+    {
+     "id": "c17_4",
+     "label": "FW が IPv6 を遮断"
+    },
+    {
+     "id": "c17_5",
+     "label": "サイト側の IPv6 だけの障害"
+    }
+   ],
+   "observations": [
+    {
+     "id": "g1",
+     "tool": "dns",
+     "label": "DNS クエリ（そのサイト名）",
+     "cost": 1,
+     "results": {
+      "c17_1": "BOTH_OK",
+      "c17_2": "BOTH_OK",
+      "c17_3": "WRONG_AAAA",
+      "c17_4": "BOTH_OK",
+      "c17_5": "BOTH_OK"
+     },
+     "display": "A と AAAA が正常に返る"
+    },
+    {
+     "id": "g2",
+     "tool": "ping",
+     "label": "ping6 PC1→SRV1（IPv6）",
+     "cost": 1,
+     "results": {
+      "c17_1": "FAIL",
+      "c17_2": "FAIL",
+      "c17_3": "FAIL",
+      "c17_4": "FAIL",
+      "c17_5": "FAIL"
+     },
+     "display": "応答なし"
+    },
+    {
+     "id": "g3",
+     "tool": "ping",
+     "label": "ping PC1→SRV1（IPv4）",
+     "cost": 1,
+     "results": {
+      "c17_1": "OK",
+      "c17_2": "FAIL",
+      "c17_3": "OK",
+      "c17_4": "OK",
+      "c17_5": "OK"
+     },
+     "display": "応答あり"
+    },
+    {
+     "id": "g4",
+     "tool": "traceroute",
+     "label": "traceroute6 PC1→SRV1",
+     "cost": 1,
+     "results": {
+      "c17_1": "STOP_R1",
+      "c17_2": "REACH_NEAR",
+      "c17_3": "WRONG_DST",
+      "c17_4": "STOP_R1",
+      "c17_5": "REACH_NEAR"
+     },
+     "display": "1 ホップ目 R1 で停止（経路なし）"
+    },
+    {
+     "id": "g5",
+     "tool": "log",
+     "label": "R1 ログ（IPv6 の deny）",
+     "cost": 2,
+     "results": {
+      "c17_1": "NONE",
+      "c17_2": "NONE",
+      "c17_3": "NONE",
+      "c17_4": "DENY6",
+      "c17_5": "NONE"
+     },
+     "display": "該当する deny ログなし"
+    },
+    {
+     "id": "g6",
+     "tool": "snmp",
+     "label": "SNMP R1（IPv6 ルーティングテーブル）",
+     "cost": 2,
+     "results": {
+      "c17_1": "NO_V6_ROUTE",
+      "c17_2": "ROUTE_EXISTS",
+      "c17_3": "ROUTE_EXISTS",
+      "c17_4": "ROUTE_EXISTS",
+      "c17_5": "ROUTE_EXISTS"
+     },
+     "display": "R1 に IPv6 のデフォルトルートがない"
+    }
+   ],
+   "optimal": [
+    "g4",
+    "g6"
+   ],
+   "explanation": {
+    "evidence_chain": [
+     "g3/g2: IPv4 では届くのに IPv6 では届かない ＝ 問題は v6 側に限定される",
+     "g4: v6 は R1 で止まる。遮断でも同じ見え方をするので、理由が要る",
+     "g6: R1 に v6 のデフォルトルート自体がない ＝ 遮断ではなく経路の欠落。端末は AAAA を優先して v6 で試み、失敗していた"
+    ],
+    "teaching": "デュアルスタックでは「v4 は正常」が切り分けの鍵になる。AAAA があるのに v6 の経路がないと、端末は失敗する側を選び続ける。"
+   }
+  },
+  {
+   "id": "case18",
+   "level": 3,
+   "title": "朝いちばんだけ IP が取れない",
+   "budget": 6,
+   "symptom": "朝の始業時だけ、一部の端末で IP アドレスが取れずつながらない。昼には直っている。来客や会議で端末が増える日に特にひどい。",
+   "topology": {
+    "nodes": [
+     {
+      "id": "PC1",
+      "x": 12,
+      "y": 20
+     },
+     {
+      "id": "PC2",
+      "x": 12,
+      "y": 44
+     },
+     {
+      "id": "SW1",
+      "x": 34,
+      "y": 30
+     },
+     {
+      "id": "DHCP1",
+      "x": 64,
+      "y": 14
+     },
+     {
+      "id": "R1",
+      "x": 64,
+      "y": 46
+     }
+    ],
+    "edges": [
+     [
+      "PC1",
+      "SW1"
+     ],
+     [
+      "PC2",
+      "SW1"
+     ],
+     [
+      "SW1",
+      "DHCP1"
+     ],
+     [
+      "SW1",
+      "R1"
+     ]
+    ]
+   },
+   "candidates": [
+    {
+     "id": "c18_1",
+     "label": "DHCP プール枯渇（リースの滞留で空きが尽きる）",
+     "answer": true
+    },
+    {
+     "id": "c18_2",
+     "label": "DHCP サービスの早朝停止（夜間バッチの影響）"
+    },
+    {
+     "id": "c18_3",
+     "label": "SW1 の特定ポートの障害"
+    },
+    {
+     "id": "c18_4",
+     "label": "不正な DHCP サーバ（朝だけ持ち込まれる機器）"
+    },
+    {
+     "id": "c18_5",
+     "label": "PC1 の NIC 省電力の不具合"
+    }
+   ],
+   "observations": [
+    {
+     "id": "h1",
+     "tool": "tcp",
+     "label": "端末確認 PC1（取得アドレス）",
+     "cost": 1,
+     "results": {
+      "c18_1": "APIPA",
+      "c18_2": "APIPA",
+      "c18_3": "LINK_DOWN",
+      "c18_4": "WRONG_ADDR",
+      "c18_5": "APIPA"
+     },
+     "display": "169.254 のアドレス（取得に失敗）"
+    },
+    {
+     "id": "h2",
+     "tool": "snmp",
+     "label": "SNMP DHCP1（リース監査）",
+     "cost": 2,
+     "results": {
+      "c18_1": "STALE_LEASES",
+      "c18_2": "NORMAL",
+      "c18_3": "NORMAL",
+      "c18_4": "NORMAL",
+      "c18_5": "NORMAL"
+     },
+     "display": "撤去済み端末のリースが多数滞留し、空きがほぼない"
+    },
+    {
+     "id": "h3",
+     "tool": "log",
+     "label": "DHCP1 ログ（朝の時間帯）",
+     "cost": 2,
+     "results": {
+      "c18_1": "NO_LEASE_LOG",
+      "c18_2": "SVC_STOP",
+      "c18_3": "NONE",
+      "c18_4": "NONE",
+      "c18_5": "NONE"
+     },
+     "display": "朝の時間帯に「空きなしで応答不可」の記録が集中"
+    },
+    {
+     "id": "h4",
+     "tool": "snmp",
+     "label": "SNMP SW1（PC1 のポート）",
+     "cost": 1,
+     "results": {
+      "c18_1": "NORMAL",
+      "c18_2": "NORMAL",
+      "c18_3": "ERR",
+      "c18_4": "NORMAL",
+      "c18_5": "NORMAL"
+     },
+     "display": "ポートは正常"
+    },
+    {
+     "id": "h5",
+     "tool": "tcp",
+     "label": "対照テスト（PC2 でも朝は取得に失敗するか）",
+     "cost": 1,
+     "results": {
+      "c18_1": "FAIL",
+      "c18_2": "FAIL",
+      "c18_3": "OK",
+      "c18_4": "FAIL",
+      "c18_5": "OK"
+     },
+     "display": "PC2 でも朝は取得に失敗する"
+    }
+   ],
+   "optimal": [
+    "h2"
+   ],
+   "explanation": {
+    "evidence_chain": [
+     "h1/h5: 取得失敗は PC1 固有ではなく、朝だけ・複数端末で起きる ＝ 配る側の問題",
+     "h2: 撤去済み端末のリースが滞留し、空きがほぼない。朝の集中取得で尽きる",
+     "h3: 朝の時間帯に「空きなし」の記録が集中していることが裏付けになる"
+    ],
+    "teaching": "「朝だけ」は時刻のパターンが最大の手がかり。プールの使用率だけでなく、リースの中身（誰が掴んだままか）まで見る。"
+   }
   }
  ],
  "note": "結果は候補ごとに定義する。検証器は (1) 全候補の署名の一意性 (2) 予算内で正解を一意化できる観測集合の存在 (3) 全ダミー候補の否定可能性 を検査する。",

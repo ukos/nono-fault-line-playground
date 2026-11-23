@@ -105,7 +105,21 @@ const OUT_JA = { OK:'成功', FAIL:'失敗', DOWN:'down', UP:'up/up', UNREACHABL
   REQ_NO_LEASE:'空きなしで応答不可', NO_RESPONSE:'応答なし', SRC_PC_PORT:'一般端末ポートから応答',
   RETRY_HIGH:'再送率が高い', UTIL_HIGH:'使用率が高い', MANY:'接続台数が多い', NEGO_HALF:'100M/Halfに低下',
   FULL:'正常リンク', CO_CH:'同一チャネル干渉', WEAK_SIG:'電波が弱い', GOOD:'良好',
-  CPU_HIGH_EVE:'夕方にCPU高負荷', FAST:'高速', SLOW:'低速', TIMEOUT:'タイムアウト', DISK_HIGH:'ディスク高負荷' };
+  CPU_HIGH_EVE:'夕方にCPU高負荷', FAST:'高速', SLOW:'低速', TIMEOUT:'タイムアウト', DISK_HIGH:'ディスク高負荷',
+  NOT_ARRIVING:'フレームが届いていない', WRONG_VLAN_FRAMES:'別VLANのフレーム', BLOCKING:'STPブロック中',
+  CHANGE_LOG:'設定変更の記録', WARN:'警告が出る', EXPIRED:'期限切れ', VALID:'正常', SKEW:'時刻ずれ',
+  CHAIN:'チェーン不完全', NAME:'名前不一致', CHANGE:'作業記録あり', UP:'up/up（正常）', DOWN:'ネイバーなし',
+  NEIGHBOR_FULL:'ネイバー確立（Full）', LINK_ERR:'リンクエラー', AUTH_LOG:'認証エラーのログ',
+  AREA_LOG:'エリア不一致のログ', PROC_UP:'プロセス動作中', PROC_DOWN:'プロセス停止', STOP_R1:'R1で停止',
+  HIGH:'使用率が高い', POOL_FAIL:'プール枯渇の失敗ログ', POLICY_CHANGE:'ポリシー変更の記録',
+  SKEW_SRV:'サーバの時刻ずれ', SKEW_PC:'端末の時刻ずれ', SKEW_LOG:'時刻不一致の認証拒否ログ',
+  HALF_ERR:'約半数がエラー', SLOW_MOSTLY:'大半は成功（遅延大）', SESSION_ERR:'セッション途中でエラー',
+  ERR:'エラー応答', HC_UP:'ヘルスチェックはUP', GHOST_MEMBER:'存在しないメンバー',
+  ERR_ON_SRV2:'エラーがSRV2に集中', ERR_BOTH:'エラーが両系に分散', SWITCH:'系の切り替わり',
+  BOTH_OK:'A/AAAAとも正常', WRONG_AAAA:'誤ったAAAA応答', REACH_NEAR:'サイト手前まで到達',
+  WRONG_DST:'無関係な宛先へ', DENY6:'IPv6のdenyログ', NO_V6_ROUTE:'IPv6デフォルトルートなし',
+  ROUTE_EXISTS:'経路あり', STALE_LEASES:'リースの滞留', NO_LEASE_LOG:'空きなし記録が集中',
+  SVC_STOP:'サービス停止の記録' };
 const TOOL_JA = { ping:'PING', traceroute:'TRACEROUTE', dns:'DNS', snmp:'SNMP', tcp:'TCP', log:'LOG' };
 
 let cur = null, answerId = null;
