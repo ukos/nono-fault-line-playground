@@ -13,26 +13,26 @@
   html,body{ margin:0; padding:0; background:var(--bg); color:var(--txt); font-family:"Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif; }
   #screen-title{ max-width:880px; margin:0 auto; padding:18px 14px 40px; text-align:center; }
   #screen-title img.logo{ width:min(92vw,620px); max-height:62vh; object-fit:contain; border-radius:10px; box-shadow:0 0 34px rgba(53,200,255,.25); }
-  .tagline{ color:var(--mut); margin:16px 0 26px; text-align:center; }
+  .tagline{ color:var(--mut); margin:16px 0 6px; text-align:center; }
   .tagline .l1{ font-size:16px; letter-spacing:.14em; color:var(--txt); text-align:center; }
   .tagline .l2{ font-size:13px; letter-spacing:.1em; margin-top:6px; text-align:center; }
   #btn-start{ display:inline-block; background:var(--cy); color:#04121f; border:none; border-radius:12px;
     width:min(80vw,330px); padding:16px 22px; font-size:17px; font-weight:800; letter-spacing:.06em; cursor:pointer; font-family:inherit; box-shadow:0 0 22px rgba(53,200,255,.35);
-    text-align:left; white-space:nowrap; }
+    text-align:center; white-space:nowrap; }
   #btn-start:active{ transform:translateY(1px); }
   #screen-title .side{ display:flex; flex-direction:column; align-items:center; }
-  #btn-cracker{ display:inline-block; background:#ff5c39; color:#ffffff; border:none; border-radius:12px; margin-top:14px;
+  #btn-cracker{ display:inline-block; background:#ff5c39; color:#ffffff; border:none; border-radius:12px; margin-top:8px;
     width:min(80vw,330px); padding:16px 22px; font-size:17px; font-weight:800; letter-spacing:.06em; cursor:pointer; font-family:inherit; box-shadow:0 0 22px rgba(255,92,57,.35);
-    text-align:left; white-space:nowrap; }
+    text-align:center; white-space:nowrap; }
   #btn-cracker:active{ transform:translateY(1px); }
-  .cap-b{ margin-top:10px; width:min(80vw,330px); font-size:12px; letter-spacing:.12em; color:#ff9d87; text-align:left; white-space:nowrap; }
+  .cap-b{ margin-top:14px; width:min(80vw,330px); font-size:12px; letter-spacing:.12em; color:#ff9d87; text-align:center; white-space:nowrap; }
   /* 横向き: ロゴを左、メニュー（メッセージ＋ボタン）を右に並べる */
   @media (orientation: landscape) and (max-height: 560px){
     #screen-title{ display:flex; align-items:center; justify-content:center; gap:30px;
       min-height:100dvh; padding:12px 22px; }
     #screen-title img.logo{ width:auto; height:min(84vh,430px); max-height:84vh; flex:0 0 auto; }
     #screen-title .side{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; }
-    .tagline{ margin:0 0 24px; }
+    .tagline{ margin:0 0 6px; }
   }
 </style>
 </head>
@@ -44,9 +44,9 @@
       <div class="l1">ネットワーク障害診断パズル</div>
       <div class="l2">観測し、消去し、特定せよ</div>
     </div>
-    <button id="btn-start">▶ シナリオを選ぶ</button>
+    <button id="btn-start">▶ 障害シナリオを選ぶ</button>
+    <div class="cap-b">痕跡を追い、侵入が成立する条件を特定せよ。</div>
     <button id="btn-cracker">◀ サイドB　CRACKS</button>
-    <div class="cap-b">痕跡を追い、侵入条件を特定せよ</div>
   </div>
 </div>
 <script>
