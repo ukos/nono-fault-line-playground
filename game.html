@@ -134,7 +134,13 @@ const OUT_JA = { OK:'成功', FAIL:'失敗', DOWN:'down', UP:'up/up', UNREACHABL
   BATCH_LONGER:'バッチ長時間化', REBOOT_RECOVERS:'再起動で回復', SPF_MISSING:'SPFに送信元が含まれない',
   SPF_OK:'SPFは正常', BOUNCE_REJECT:'拒否のバウンス', NO_BOUNCE:'バウンスなし（滞留）',
   LISTED:'リスト掲載あり', CLEAR:'リスト掲載なし', DKIM_FAIL:'DKIM検証失敗', DKIM_OK:'DKIMは正常',
-  QUEUE_STUCK:'キュー滞留', MIGRATION_LOG:'移行作業の記録' };
+  QUEUE_STUCK:'キュー滞留', MIGRATION_LOG:'移行作業の記録',
+  AUTH_FAIL:'認証失敗', NO_SIGNAL:'信号なし', OLD_PROFILE:'古い設定が残っている',
+  PW_MISMATCH_LOG:'パスワード不一致の記録', MAC_DENIED:'MACフィルタで拒否',
+  LATE_COLLISION:'遅延衝突', MISMATCH_CONF:'duplex設定の不一致', PORT_ERR:'ポートエラー',
+  IMPROVES:'改善した', NO_CHANGE:'変化なし', TX_ONLY:'送信カウンタのみ増加',
+  UNSTABLE_CNT:'カウンタが不安定', NO_RX_LIGHT:'受信光なし', RX_OK:'受信光あり',
+  TX_DEAD:'送信部の故障', RX_DEAD:'受信部の故障', PATH_ASYM:'戻りだけ別経路' };
 const TOOL_JA = { ping:'PING', traceroute:'TRACEROUTE', dns:'DNS', snmp:'SNMP', tcp:'TCP', log:'LOG' };
 
 let cur = null, answerId = null;

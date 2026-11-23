@@ -4416,6 +4416,480 @@
     ],
     "teaching": "送信メールは「送れた」と「届いた」が別物。認証レコードと実際の送信元の突き合わせが型になる。移行後に残る設定漏れの典型。"
    }
+  },
+  {
+   "id": "case27",
+   "level": 2,
+   "title": "Wi-Fi だけつながらない",
+   "budget": 5,
+   "symptom": "1台のノートPCだけ、社内 Wi-Fi につながらない。有線では使える。他の人の端末は問題ない。先週、Wi-Fi のパスワードを変更した。",
+   "topology": {
+    "nodes": [
+     {
+      "id": "PC9",
+      "x": 10,
+      "y": 30
+     },
+     {
+      "id": "AP1",
+      "x": 34,
+      "y": 30
+     },
+     {
+      "id": "SW1",
+      "x": 58,
+      "y": 30
+     },
+     {
+      "id": "SRV1",
+      "x": 84,
+      "y": 30
+     }
+    ],
+    "edges": [
+     [
+      "PC9",
+      "AP1"
+     ],
+     [
+      "AP1",
+      "SW1"
+     ],
+     [
+      "SW1",
+      "SRV1"
+     ]
+    ]
+   },
+   "candidates": [
+    {
+     "id": "c27_1",
+     "label": "端末に残った古い接続設定（パスワード変更に未追随）",
+     "answer": true
+    },
+    {
+     "id": "c27_2",
+     "label": "AP1 の故障"
+    },
+    {
+     "id": "c27_3",
+     "label": "その端末の無線アダプタ故障"
+    },
+    {
+     "id": "c27_4",
+     "label": "MAC アドレスフィルタで拒否されている"
+    }
+   ],
+   "observations": [
+    {
+     "id": "ai1",
+     "tool": "tcp",
+     "label": "接続試行（問題の端末）",
+     "cost": 1,
+     "results": {
+      "c27_1": "AUTH_FAIL",
+      "c27_2": "NO_SIGNAL",
+      "c27_3": "NO_SIGNAL",
+      "c27_4": "AUTH_FAIL"
+     },
+     "display": "認証の段階で失敗する"
+    },
+    {
+     "id": "ai2",
+     "tool": "tcp",
+     "label": "他端末での接続確認",
+     "cost": 1,
+     "results": {
+      "c27_1": "OK",
+      "c27_2": "FAIL",
+      "c27_3": "OK",
+      "c27_4": "OK"
+     },
+     "display": "他の端末は接続できる"
+    },
+    {
+     "id": "ai3",
+     "tool": "snmp",
+     "label": "SNMP AP1（状態）",
+     "cost": 1,
+     "results": {
+      "c27_1": "NORMAL",
+      "c27_2": "DOWN",
+      "c27_3": "NORMAL",
+      "c27_4": "NORMAL"
+     },
+     "display": "AP は正常に動作している"
+    },
+    {
+     "id": "ai4",
+     "tool": "snmp",
+     "label": "端末の保存プロファイル確認",
+     "cost": 2,
+     "results": {
+      "c27_1": "OLD_PROFILE",
+      "c27_2": "NORMAL",
+      "c27_3": "NORMAL",
+      "c27_4": "NORMAL"
+     },
+     "display": "変更前の古い設定が端末に残っていた"
+    },
+    {
+     "id": "ai5",
+     "tool": "log",
+     "label": "AP の認証ログ",
+     "cost": 2,
+     "results": {
+      "c27_1": "PW_MISMATCH_LOG",
+      "c27_2": "NONE",
+      "c27_3": "NONE",
+      "c27_4": "MAC_DENIED"
+     },
+     "display": "パスワード不一致の記録があった"
+    }
+   ],
+   "optimal": [
+    "ai4"
+   ],
+   "explanation": {
+    "evidence_chain": [
+     "ai2/ai3: 他の端末はつながり、AP も正常 ＝ 全体の障害ではない",
+     "ai1: 失敗は認証の段階。電波以前の話だった",
+     "ai4/ai5: 端末に変更前の設定が残っていた。パスワード変更に、その端末だけ追随できていなかった"
+    ],
+    "teaching": "「1台だけ」は、端末と全体の対照から入る。全体が生きていれば、答えは端末側の設定と履歴にある。"
+   }
+  },
+  {
+   "id": "case28",
+   "level": 5,
+   "title": "つながるのに遅くてエラーが出る",
+   "budget": 6,
+   "symptom": "PC1 はつながるのに、大きなファイルの転送が極端に遅く、エラーで止まることもある。小さい通信は問題ない。",
+   "topology": {
+    "nodes": [
+     {
+      "id": "PC1",
+      "x": 12,
+      "y": 30
+     },
+     {
+      "id": "SW1",
+      "x": 36,
+      "y": 30
+     },
+     {
+      "id": "R1",
+      "x": 60,
+      "y": 30
+     },
+     {
+      "id": "SRV1",
+      "x": 84,
+      "y": 30
+     }
+    ],
+    "edges": [
+     [
+      "PC1",
+      "SW1"
+     ],
+     [
+      "SW1",
+      "R1"
+     ],
+     [
+      "R1",
+      "SRV1"
+     ]
+    ]
+   },
+   "candidates": [
+    {
+     "id": "c28_1",
+     "label": "デュプレックスの不一致（片側が半二重）",
+     "answer": true
+    },
+    {
+     "id": "c28_2",
+     "label": "ケーブルの劣化"
+    },
+    {
+     "id": "c28_3",
+     "label": "SW1 のポート故障"
+    },
+    {
+     "id": "c28_4",
+     "label": "端末 NIC の故障"
+    },
+    {
+     "id": "c28_5",
+     "label": "回線の輻輳"
+    }
+   ],
+   "observations": [
+    {
+     "id": "aj1",
+     "tool": "ping",
+     "label": "ping PC1→SRV1（小さいサイズ）",
+     "cost": 1,
+     "results": {
+      "c28_1": "OK",
+      "c28_2": "OK",
+      "c28_3": "OK",
+      "c28_4": "OK",
+      "c28_5": "OK"
+     },
+     "display": "応答あり"
+    },
+    {
+     "id": "aj2",
+     "tool": "snmp",
+     "label": "SNMP SW1（ポートのエラー統計）",
+     "cost": 1,
+     "results": {
+      "c28_1": "LATE_COLLISION",
+      "c28_2": "CRC_ERR",
+      "c28_3": "PORT_ERR",
+      "c28_4": "LATE_COLLISION",
+      "c28_5": "NORMAL"
+     },
+     "display": "late collision（遅延衝突）が多発している"
+    },
+    {
+     "id": "aj3",
+     "tool": "snmp",
+     "label": "両端の設定の突き合わせ（速度と duplex）",
+     "cost": 2,
+     "results": {
+      "c28_1": "MISMATCH_CONF",
+      "c28_2": "NORMAL",
+      "c28_3": "NORMAL",
+      "c28_4": "NORMAL",
+      "c28_5": "NORMAL"
+     },
+     "display": "SW 側は全二重固定、端末側は自動交渉になっていた"
+    },
+    {
+     "id": "aj4",
+     "tool": "snmp",
+     "label": "SNMP R1（回線使用率）",
+     "cost": 1,
+     "results": {
+      "c28_1": "NORMAL",
+      "c28_2": "NORMAL",
+      "c28_3": "NORMAL",
+      "c28_4": "NORMAL",
+      "c28_5": "SATURATED"
+     },
+     "display": "回線は飽和していない"
+    },
+    {
+     "id": "aj5",
+     "tool": "tcp",
+     "label": "ケーブル交換テスト（対照実験）",
+     "cost": 2,
+     "results": {
+      "c28_1": "NO_CHANGE",
+      "c28_2": "IMPROVES",
+      "c28_3": "NO_CHANGE",
+      "c28_4": "NO_CHANGE",
+      "c28_5": "NO_CHANGE"
+     },
+     "display": "ケーブルを替えても変わらない"
+    },
+    {
+     "id": "aj6",
+     "tool": "snmp",
+     "label": "端末側の統計",
+     "cost": 1,
+     "results": {
+      "c28_1": "LATE_COLLISION",
+      "c28_2": "NORMAL",
+      "c28_3": "NORMAL",
+      "c28_4": "LATE_COLLISION",
+      "c28_5": "NORMAL"
+     },
+     "display": "端末側でも衝突が出ている"
+    }
+   ],
+   "optimal": [
+    "aj3"
+   ],
+   "explanation": {
+    "evidence_chain": [
+     "aj1: 小さい通信は通る ＝ 断絶ではなく、負荷がかかると崩れる種類の障害",
+     "aj2/aj6: 両端で late collision が出ている ＝ 半二重の区間がある署名",
+     "aj3: SW 側は全二重固定、端末側は自動交渉。自動側が半二重に落ち、すれ違いが起きていた"
+    ],
+    "teaching": "「つながるのに遅い」はリンクの質を見る。全二重固定と自動交渉の組み合わせで片側が半二重に落ちるのは、古典的な罠。"
+   }
+  },
+  {
+   "id": "case29",
+   "level": 6,
+   "title": "片方だけ届かない",
+   "budget": 7,
+   "symptom": "SRV1 への通信が成立しない。機器のランプは点いており、リンクは上がっているように見える。最近、フロアの配線を触った。",
+   "topology": {
+    "nodes": [
+     {
+      "id": "PC1",
+      "x": 10,
+      "y": 30
+     },
+     {
+      "id": "SW1",
+      "x": 34,
+      "y": 30
+     },
+     {
+      "id": "R1",
+      "x": 58,
+      "y": 30
+     },
+     {
+      "id": "SRV1",
+      "x": 84,
+      "y": 30
+     }
+    ],
+    "edges": [
+     [
+      "PC1",
+      "SW1"
+     ],
+     [
+      "SW1",
+      "R1"
+     ],
+     [
+      "R1",
+      "SRV1"
+     ]
+    ]
+   },
+   "candidates": [
+    {
+     "id": "c29_1",
+     "label": "片方向のリンク障害（戻りの芯だけ断）",
+     "answer": true
+    },
+    {
+     "id": "c29_2",
+     "label": "戻り経路の ACL（非対称な遮断）"
+    },
+    {
+     "id": "c29_3",
+     "label": "SRV1 の受信部の故障"
+    },
+    {
+     "id": "c29_4",
+     "label": "SRV1 の送信部の故障"
+    },
+    {
+     "id": "c29_5",
+     "label": "ケーブルの接触不良（両方向が不安定）"
+    }
+   ],
+   "observations": [
+    {
+     "id": "ak1",
+     "tool": "ping",
+     "label": "ping PC1→SRV1",
+     "cost": 1,
+     "results": {
+      "c29_1": "FAIL",
+      "c29_2": "FAIL",
+      "c29_3": "FAIL",
+      "c29_4": "FAIL",
+      "c29_5": "FLAP"
+     },
+     "display": "応答なし"
+    },
+    {
+     "id": "ak2",
+     "tool": "snmp",
+     "label": "SNMP SW1（送受信カウンタ）",
+     "cost": 1,
+     "results": {
+      "c29_1": "TX_ONLY",
+      "c29_2": "NORMAL",
+      "c29_3": "TX_ONLY",
+      "c29_4": "TX_ONLY",
+      "c29_5": "UNSTABLE_CNT"
+     },
+     "display": "送信カウンタだけが増え、受信が止まっている"
+    },
+    {
+     "id": "ak3",
+     "tool": "snmp",
+     "label": "光パワーの確認（SW1 の受信側）",
+     "cost": 2,
+     "results": {
+      "c29_1": "NO_RX_LIGHT",
+      "c29_2": "NORMAL",
+      "c29_3": "RX_OK",
+      "c29_4": "NO_RX_LIGHT",
+      "c29_5": "NORMAL"
+     },
+     "display": "SW1 側に受信光が来ていない"
+    },
+    {
+     "id": "ak4",
+     "tool": "snmp",
+     "label": "光パワーの確認（SRV1 の受信側）",
+     "cost": 2,
+     "results": {
+      "c29_1": "RX_OK",
+      "c29_2": "NORMAL",
+      "c29_3": "RX_OK",
+      "c29_4": "RX_OK",
+      "c29_5": "NORMAL"
+     },
+     "display": "SRV1 側の受信光はある（行きは生きている）"
+    },
+    {
+     "id": "ak5",
+     "tool": "log",
+     "label": "SRV1 の自己診断ログ",
+     "cost": 1,
+     "results": {
+      "c29_1": "NORMAL",
+      "c29_2": "NORMAL",
+      "c29_3": "RX_DEAD",
+      "c29_4": "TX_DEAD",
+      "c29_5": "NORMAL"
+     },
+     "display": "SRV1 の送受信部は正常"
+    },
+    {
+     "id": "ak6",
+     "tool": "traceroute",
+     "label": "traceroute（両方向）",
+     "cost": 1,
+     "results": {
+      "c29_1": "NO_REPLY",
+      "c29_2": "PATH_ASYM",
+      "c29_3": "NO_REPLY",
+      "c29_4": "NO_REPLY",
+      "c29_5": "NO_REPLY"
+     },
+     "display": "応答が返らない"
+    }
+   ],
+   "optimal": [
+    "ak2",
+    "ak3",
+    "ak5"
+   ],
+   "explanation": {
+    "evidence_chain": [
+     "ak2: SW1 は送っているのに受けていない ＝ 壊れているのは一方向だけ",
+     "ak3/ak4: 行きの光は届き、戻りの光が来ていない。死んでいるのは戻りの芯",
+     "ak5: SRV1 の送受信部は正常 ＝ 機器ではなく、その間の配線だった"
+    ],
+    "teaching": "「片方向だけ」の障害は、往復が前提の ping では場所が割れない。カウンタと光を方向別に見るのが型になる。"
+   }
   }
  ],
  "note": "結果は候補ごとに定義する。検証器は (1) 全候補の署名の一意性 (2) 予算内で正解を一意化できる観測集合の存在 (3) 全ダミー候補の否定可能性 を検査する。",

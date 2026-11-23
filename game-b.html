@@ -157,7 +157,17 @@ const OUT_JA = { OK:'成功', FAIL:'失敗', DOWN:'down', UP:'up/up', UNREACHABL
   NO_EDR:'対策ソフト未導入', INSTALLED:'対策ソフト導入済み', PW_ONLY:'パスワード認証のみ',
   CERT_AUTH:'端末認証あり', REWRITABLE:'書き換え可能', ISOLATED_BACKUP:'隔離済み',
   RESTORE_UNTESTED:'復旧訓練は未実施', ADMIN_CAN_DELETE:'管理者権限で削除可能',
-  DEDICATED_ONLY:'専用権限のみ' };
+  DEDICATED_ONLY:'専用権限のみ',
+  SAME_SSID:'業務と来客が同じSSID', SEPARATED:'分離されている', OPEN_SSID:'暗号化なしのSSID',
+  UNKNOWN_SSID:'台帳にないSSID', POSTED_PW:'来客に掲示', UNKNOWN_PW:'共有範囲が不明',
+  SHARED_KEY:'全員同じ共有キー', PER_USER:'個別認証', NONE_ENC:'暗号化なし',
+  EXT_FORWARD:'外部への転送ルール', INTERNAL_RULE:'社内への振り分け',
+  NIGHT_FOREIGN:'深夜に海外から設定', SELF_BUSINESS:'本人が業務時間に設定',
+  ADMIN_SET:'管理者が設定', NO_MEMORY:'本人に覚えがない', BUSINESS_NEED:'業務で必要',
+  ALL_MAIL:'全メールが対象', PARTIAL:'一部のみ対象', ALWAYS_ON:'常時接続可能',
+  ON_REQUEST:'申請時のみ有効', DISABLED:'無効化されている', SHARED_VENDOR:'ベンダ共用アカウント',
+  PER_PERSON:'担当者ごとに発行', UNREPORTED_USE:'報告のない接続', MATCHES_REPORT:'作業報告と一致',
+  STEADY_MONITOR:'定常的な監視アクセス', MFA_ON:'多要素認証あり' };
 const TOOL_JA = { ping:'PING', traceroute:'TRACEROUTE', dns:'DNS', snmp:'SNMP', tcp:'TCP', log:'LOG', authlog:'AUTH LOG', scan:'SCAN', config:'CONFIG', audit:'AUDIT', header:'HEADER', test:'TEST' };
 
 let cur = null, answerId = null;

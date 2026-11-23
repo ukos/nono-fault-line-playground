@@ -2196,6 +2196,405 @@
     ],
     "teaching": "ランサムの条件は組で見る。入口の条件と、復旧を断つ条件は分けて点検する。"
    }
+  },
+  {
+   "id": "bcase17",
+   "level": 2,
+   "title": "誰でも入れる Wi-Fi",
+   "budget": 5,
+   "symptom": "来客対応の棚卸しで、Wi-Fi の使い方が気になった。業務への入口になっていないかを特定する。",
+   "topology": {
+    "nodes": [
+     {
+      "id": "PC1",
+      "x": 10,
+      "y": 30
+     },
+     {
+      "id": "AP1",
+      "x": 34,
+      "y": 30
+     },
+     {
+      "id": "GUEST",
+      "x": 30,
+      "y": 58
+     },
+     {
+      "id": "SW1",
+      "x": 58,
+      "y": 30
+     },
+     {
+      "id": "SRV1",
+      "x": 84,
+      "y": 30
+     }
+    ],
+    "edges": [
+     [
+      "PC1",
+      "AP1"
+     ],
+     [
+      "GUEST",
+      "AP1"
+     ],
+     [
+      "AP1",
+      "SW1"
+     ],
+     [
+      "SW1",
+      "SRV1"
+     ]
+    ]
+   },
+   "candidates": [
+    {
+     "id": "k17_1",
+     "label": "業務端末が、来客と共有の Wi-Fi（同じパスワード）につながっている",
+     "answer": true
+    },
+    {
+     "id": "k17_2",
+     "label": "ゲスト用は分離されている（問題なし）"
+    },
+    {
+     "id": "k17_3",
+     "label": "暗号化なしの AP が立っている"
+    },
+    {
+     "id": "k17_4",
+     "label": "私設 AP（野良 AP）が置かれている"
+    }
+   ],
+   "observations": [
+    {
+     "id": "ce1",
+     "tool": "scan",
+     "label": "AP の棚卸し（SSID と接続状況）",
+     "cost": 1,
+     "results": {
+      "k17_1": "SAME_SSID",
+      "k17_2": "SEPARATED",
+      "k17_3": "OPEN_SSID",
+      "k17_4": "SAME_SSID"
+     },
+     "display": "業務端末と来客が同じ SSID に接続していた"
+    },
+    {
+     "id": "ce2",
+     "tool": "config",
+     "label": "接続先の確認（その SSID の先）",
+     "cost": 1,
+     "results": {
+      "k17_1": "CORP_LAN",
+      "k17_2": "GUEST_NET",
+      "k17_3": "CORP_LAN",
+      "k17_4": "CORP_LAN"
+     },
+     "display": "その先は業務セグメントだった"
+    },
+    {
+     "id": "ce3",
+     "tool": "audit",
+     "label": "パスワードの共有範囲",
+     "cost": 2,
+     "results": {
+      "k17_1": "POSTED_PW",
+      "k17_2": "NA",
+      "k17_3": "NA",
+      "k17_4": "UNKNOWN_PW"
+     },
+     "display": "パスワードは来客用に掲示されていた"
+    },
+    {
+     "id": "ce4",
+     "tool": "config",
+     "label": "暗号化方式の確認",
+     "cost": 1,
+     "results": {
+      "k17_1": "SHARED_KEY",
+      "k17_2": "PER_USER",
+      "k17_3": "NONE_ENC",
+      "k17_4": "SHARED_KEY"
+     },
+     "display": "全員が同じ共有キーを使っていた"
+    }
+   ],
+   "optimal": [
+    "ce1",
+    "ce3"
+   ],
+   "explanation": {
+    "evidence_chain": [
+     "ce1/ce2: 業務端末と来客が同じ SSID で、その先は業務セグメントだった",
+     "ce3: そのパスワードは来客に掲示されていた。知っている人の範囲が管理できていない",
+     "Wi-Fi の条件は暗号化の有無だけでは決まらなかった"
+    ],
+    "teaching": "無線の点検は「誰と鍵を共有し、その先がどこにつながっているか」で見る。"
+   }
+  },
+  {
+   "id": "bcase18",
+   "level": 6,
+   "title": "転送されるメール",
+   "budget": 5,
+   "symptom": "取引先から「送った覚えのない内容が届いた」と相談があった。メールまわりの条件を特定する。",
+   "topology": {
+    "nodes": [
+     {
+      "id": "PC1",
+      "x": 10,
+      "y": 30
+     },
+     {
+      "id": "SW1",
+      "x": 30,
+      "y": 30
+     },
+     {
+      "id": "MTA1",
+      "x": 56,
+      "y": 30
+     },
+     {
+      "id": "EXT",
+      "x": 84,
+      "y": 30
+     }
+    ],
+    "edges": [
+     [
+      "PC1",
+      "SW1"
+     ],
+     [
+      "SW1",
+      "MTA1"
+     ],
+     [
+      "MTA1",
+      "EXT"
+     ]
+    ]
+   },
+   "candidates": [
+    {
+     "id": "k18_1",
+     "label": "アカウントに外部への自動転送ルールが仕込まれている",
+     "answer": true
+    },
+    {
+     "id": "k18_2",
+     "label": "本人が設定した正規の転送（業務用）"
+    },
+    {
+     "id": "k18_3",
+     "label": "共有メールボックスの振り分けルール（業務）"
+    },
+    {
+     "id": "k18_4",
+     "label": "メーリングリストの配送（正常）"
+    }
+   ],
+   "observations": [
+    {
+     "id": "cf1",
+     "tool": "config",
+     "label": "転送ルールの棚卸し",
+     "cost": 1,
+     "results": {
+      "k18_1": "EXT_FORWARD",
+      "k18_2": "EXT_FORWARD",
+      "k18_3": "INTERNAL_RULE",
+      "k18_4": "NONE"
+     },
+     "display": "外部のフリーメールへ転送するルールがあった"
+    },
+    {
+     "id": "cf2",
+     "tool": "audit",
+     "label": "設定の履歴（いつ・どこから）",
+     "cost": 2,
+     "results": {
+      "k18_1": "NIGHT_FOREIGN",
+      "k18_2": "SELF_BUSINESS",
+      "k18_3": "ADMIN_SET",
+      "k18_4": "NA"
+     },
+     "display": "深夜に海外からのアクセスで設定されていた"
+    },
+    {
+     "id": "cf3",
+     "tool": "audit",
+     "label": "本人への確認",
+     "cost": 1,
+     "results": {
+      "k18_1": "NO_MEMORY",
+      "k18_2": "NO_MEMORY",
+      "k18_3": "BUSINESS_NEED",
+      "k18_4": "NA"
+     },
+     "display": "本人に覚えがなかった"
+    },
+    {
+     "id": "cf4",
+     "tool": "config",
+     "label": "転送の対象範囲",
+     "cost": 2,
+     "results": {
+      "k18_1": "ALL_MAIL",
+      "k18_2": "PARTIAL",
+      "k18_3": "PARTIAL",
+      "k18_4": "NA"
+     },
+     "display": "全ての受信メールが転送対象だった"
+    }
+   ],
+   "optimal": [
+    "cf1",
+    "cf2"
+   ],
+   "explanation": {
+    "evidence_chain": [
+     "cf1: 外部への転送ルール自体は、本人の正規設定でも存在する",
+     "cf2/cf3: これは深夜に海外から設定され、本人に覚えがなかった",
+     "cf4: 対象は全件。受信メールがそのまま外へ出続ける条件だった"
+    ],
+    "teaching": "転送ルールは痕跡が残りにくい。ルールの有無だけでなく「いつ・誰が・全件か」を組で見る。"
+   }
+  },
+  {
+   "id": "bcase19",
+   "level": 7,
+   "title": "保守の入口",
+   "budget": 5,
+   "symptom": "ベンダ保守の棚卸しで、リモートアクセスの運用が気になった。入口になる条件を特定する。",
+   "topology": {
+    "nodes": [
+     {
+      "id": "EXT",
+      "x": 10,
+      "y": 30
+     },
+     {
+      "id": "FW1",
+      "x": 32,
+      "y": 30
+     },
+     {
+      "id": "SRV1",
+      "x": 58,
+      "y": 30
+     },
+     {
+      "id": "PC1",
+      "x": 84,
+      "y": 30
+     }
+    ],
+    "edges": [
+     [
+      "EXT",
+      "FW1"
+     ],
+     [
+      "FW1",
+      "SRV1"
+     ],
+     [
+      "SRV1",
+      "PC1"
+     ]
+    ]
+   },
+   "candidates": [
+    {
+     "id": "k19_1",
+     "label": "保守用アクセスが常時有効で、ベンダ共用アカウントのまま",
+     "answer": true
+    },
+    {
+     "id": "k19_2",
+     "label": "作業時だけ有効化される保守経路（正規運用）"
+    },
+    {
+     "id": "k19_3",
+     "label": "保守経路は閉じられている（台帳の記録違い）"
+    },
+    {
+     "id": "k19_4",
+     "label": "監視用の読み取り専用アカウント"
+    }
+   ],
+   "observations": [
+    {
+     "id": "cg1",
+     "tool": "config",
+     "label": "接続経路の確認（保守用アクセスの状態）",
+     "cost": 1,
+     "results": {
+      "k19_1": "ALWAYS_ON",
+      "k19_2": "ON_REQUEST",
+      "k19_3": "DISABLED",
+      "k19_4": "ALWAYS_ON"
+     },
+     "display": "保守用の接続経路は常時有効だった"
+    },
+    {
+     "id": "cg2",
+     "tool": "audit",
+     "label": "アカウントの確認（保守用 ID）",
+     "cost": 2,
+     "results": {
+      "k19_1": "SHARED_VENDOR",
+      "k19_2": "PER_PERSON",
+      "k19_3": "NA",
+      "k19_4": "READONLY"
+     },
+     "display": "ベンダ共用のアカウントで、個人を特定できなかった"
+    },
+    {
+     "id": "cg3",
+     "tool": "authlog",
+     "label": "接続ログ（使われ方）",
+     "cost": 2,
+     "results": {
+      "k19_1": "UNREPORTED_USE",
+      "k19_2": "MATCHES_REPORT",
+      "k19_3": "NONE",
+      "k19_4": "STEADY_MONITOR"
+     },
+     "display": "作業報告のない日にも接続があった"
+    },
+    {
+     "id": "cg4",
+     "tool": "config",
+     "label": "多要素認証の確認",
+     "cost": 1,
+     "results": {
+      "k19_1": "NO_MFA",
+      "k19_2": "MFA_ON",
+      "k19_3": "NA",
+      "k19_4": "NO_MFA"
+     },
+     "display": "多要素認証はなかった"
+    }
+   ],
+   "optimal": [
+    "cg2",
+    "cg3"
+   ],
+   "explanation": {
+    "evidence_chain": [
+     "cg1: 経路は常時有効。ただし常時有効な監視もあるため、それだけでは決まらない",
+     "cg2/cg3: 共用アカウントで個人を特定できず、作業報告のない日の接続があった",
+     "入口の条件は「あること」ではなく、運用の形で決まっていた"
+    ],
+    "teaching": "外部の入口は、常時有効か・誰の名義か・報告と一致するか、の組で見る。"
+   }
   }
  ]
 }
