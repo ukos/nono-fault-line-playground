@@ -8,32 +8,37 @@
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" type="image/png" href="icon-192.png">
 <style>
-  :root{ --bg:#04070f; --panel:#0a1120; --line:#1d3355; --txt:#dfe9f5; --mut:#8fa3bd; --or:#ff5c39; --or2:#ff6a4d; }
+  :root{ --bg:#04070f; --panel:#0a1120; --panel2:#0d1730; --line:#1d3355; --txt:#dfe9f5; --mut:#8fa3bd; --or:#ff5c39; --or2:#ff6a4d; --am:#ffc857; }
   *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
   html,body{ margin:0; padding:0; background:var(--bg); color:var(--txt); font-family:"Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif; }
   #screen-title{ max-width:880px; margin:0 auto; padding:18px 14px 40px; text-align:center; }
-  .side-label{ color:var(--or2); font-size:12px; letter-spacing:.34em; font-weight:700; margin-top:26px; }
+  .side-label{ color:var(--or2); font-size:12px; letter-spacing:.34em; font-weight:700; margin-top:18px; }
   .wordmark{ font-size:64px; font-weight:900; letter-spacing:.1em; color:var(--or2); line-height:1.1;
-    text-shadow:0 0 30px rgba(255,106,77,.4); margin:8px 0 4px; font-family:"Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif; }
-  .tagline{ color:var(--mut); margin:16px 0 6px; text-align:center; }
-  .tagline .l1{ font-size:15px; letter-spacing:.1em; color:var(--txt); text-align:center; }
-  #screen-title .side{ display:flex; flex-direction:column; align-items:center; }
-  #btn-start{ display:inline-block; background:var(--or); color:#ffffff; border:none; border-radius:12px;
-    width:min(80vw,330px); padding:16px 22px; font-size:17px; font-weight:800; letter-spacing:.06em; cursor:pointer; font-family:inherit; box-shadow:0 0 22px rgba(255,92,57,.35);
-    text-align:center; white-space:nowrap; }
-  #btn-start:active{ transform:translateY(1px); }
-  #btn-back{ display:inline-block; background:transparent; color:var(--txt); border:1px solid var(--line); border-radius:12px; margin-top:14px;
+    text-shadow:0 0 30px rgba(255,106,77,.4); margin:8px 0 4px; }
+  .tagline{ color:var(--mut); margin:14px 0 18px; text-align:center; }
+  .tagline .l1{ font-size:15px; letter-spacing:.06em; color:var(--txt); text-align:center; }
+  #case-list{ text-align:left; }
+  .case-btn{ display:flex; align-items:center; gap:12px; width:100%; text-align:left; margin:10px 0; padding:14px 16px;
+    background:linear-gradient(180deg,var(--panel2),var(--panel)); border:1px solid var(--line); border-radius:12px; color:var(--txt); cursor:pointer; font-family:inherit; }
+  .case-btn:active{ border-color:var(--or); }
+  .case-btn .lv{ font-family:ui-monospace,Menlo,monospace; color:#ffffff; background:var(--or); border-radius:6px; padding:3px 8px; font-weight:700; font-size:13px; white-space:nowrap; }
+  .case-btn .t{ font-size:17px; font-weight:700; white-space:nowrap; }
+  .case-btn .d{ color:var(--mut); font-size:12px; margin-top:2px; white-space:nowrap; }
+  .case-btn .star{ margin-left:auto; color:var(--am); font-size:18px; }
+  #btn-back{ display:inline-block; background:transparent; color:var(--txt); border:1px solid var(--line); border-radius:12px; margin-top:16px;
     width:min(80vw,330px); padding:16px 22px; font-size:17px; font-weight:800; letter-spacing:.06em; cursor:pointer; font-family:inherit;
     text-align:center; white-space:nowrap; }
   #btn-back:active{ transform:translateY(1px); }
-  /* 横向き: ワードマークを左、メニューを右に並べる */
+  /* 横向き: ワードマークを左、シナリオ一覧を右に並べる */
   @media (orientation: landscape) and (max-height: 560px){
-    #screen-title{ display:flex; align-items:center; justify-content:center; gap:30px;
-      min-height:100dvh; padding:12px 22px; }
-    #screen-title .brand{ flex:0 0 auto; }
-    #screen-title .side{ flex:1; justify-content:center; }
-    .side-label{ margin-top:0; }
-    .tagline{ margin:0 0 6px; }
+    #screen-title{ display:flex; align-items:flex-start; justify-content:center; gap:30px;
+      min-height:100dvh; padding:12px 22px; text-align:left; }
+    #screen-title .brand{ flex:0 0 auto; position:sticky; top:12px; }
+    #screen-title .side{ flex:1; max-width:520px; }
+    .side-label{ margin-top:6px; }
+    .tagline{ margin:0 0 10px; text-align:left; }
+    .tagline .l1{ text-align:left; }
+    #btn-back{ width:100%; }
   }
 </style>
 </head>
@@ -47,13 +52,24 @@
     <div class="tagline">
       <div class="l1">痕跡を追い、侵入が成立する条件を特定せよ。</div>
     </div>
-    <button id="btn-start">▶ シナリオを選ぶ</button>
+    <div id="case-list"></div>
     <button id="btn-back">◀ FAULT LINE へ戻る</button>
   </div>
 </div>
 <script>
-  document.getElementById('btn-start').onclick = () => location.href = 'select-b.html';
   document.getElementById('btn-back').onclick = () => location.href = 'index.html';
+  const cleared = () => { try { return JSON.parse(localStorage.getItem('cracks-cleared') || '[]'); } catch(e){ return []; } };
+  fetch('cracks.json').then(r => r.json()).then(d => {
+    const done = cleared();
+    document.getElementById('case-list').innerHTML = d.cases.map(c =>
+      `<button class="case-btn" data-case="${c.id}">
+         <span class="lv">Lv.${c.level}</span>
+         <span><span class="t">${c.title}</span><div class="d">成立条件の候補 ${c.candidates.length} 件 ／ 観測予算 ${c.budget}</div></span>
+         ${done.includes(c.id) ? '<span class="star">★</span>' : ''}
+       </button>`).join('');
+    document.querySelectorAll('[data-case]').forEach(b =>
+      b.onclick = () => location.href = `game-b.html?case=${encodeURIComponent(b.dataset.case)}`);
+  });
 </script>
 </body>
 </html>

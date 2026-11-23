@@ -127,7 +127,17 @@ const OUT_JA = { OK:'成功', FAIL:'失敗', DOWN:'down', UP:'up/up', UNREACHABL
   MACRO:'マクロ付き添付', LOOKALIKE:'酷似ドメイン', LINK_NONE:'リンク・添付なし', MACRO_ON:'マクロ有効',
   MACRO_OFF:'マクロ無効', HIJACK_SIG:'不審なログイン成功', EXUSER_LOGIN:'退職者アカウントのログイン成功',
   USER_NIGHT:'現職者の深夜ログイン', STILL_ACTIVE:'アカウント有効なまま', DISABLED:'無効化済み',
-  WIDE_ACL:'権限が広すぎる', RAT:'遠隔操作ツールの痕跡' };
+  WIDE_ACL:'権限が広すぎる', RAT:'遠隔操作ツールの痕跡',
+  PROD_FORMAT:'本番形式のキー', TEST_PREFIX:'テスト用のキー', CERT_KEY:'証明書の秘密鍵', INVALID:'無効',
+  PUBLIC:'公開（Public）', PRIVATE:'非公開（Private）', NO_ROTATION:'ローテーションなし', REVOKED:'失効済み',
+  SHARED_ADMIN:'共通の管理者パスワード', DIFFERENT:'端末ごとに異なる', FLAT:'セグメント分離なし',
+  SEGMENTED:'セグメント分離あり', FULL_ALL:'全員フルコントロール', VULN_PRESENT:'脆弱性あり',
+  PATCHED:'パッチ適用済み', LATERAL_OK:'横移動が成功', REACH_ONLY:'到達のみ（認証で停止）',
+  DANGLING:'宙ぶらりんのレコード', AXFR_OPEN:'ゾーン転送が許可', CLAIMABLE:'第三者が取得可能',
+  ACTIVE:'サービスは有効', OLD_VPN_ALIVE:'旧VPN装置が応答', TEST_ALIVE:'テスト環境が応答',
+  DUMMY:'ダミーデータ', NA:'対象なし', LEAK_ONLY:'情報漏洩のみ', SHARED_LOGIN:'共有アカウントで成功',
+  SHARED_ACTIVE:'共有アカウントは有効', MFA_ON:'MFAあり', BRUTE_TRACE:'総当たりの形跡',
+  FEW_TRIES:'失敗は数回だけ' };
 const TOOL_JA = { ping:'PING', traceroute:'TRACEROUTE', dns:'DNS', snmp:'SNMP', tcp:'TCP', log:'LOG', authlog:'AUTH LOG', scan:'SCAN', config:'CONFIG', audit:'AUDIT', header:'HEADER', test:'TEST' };
 
 let cur = null, answerId = null;
@@ -135,7 +145,7 @@ let alive = new Set(), used = new Set(), wronged = new Set(), spent = 0, mistake
 
 const $ = s => document.querySelector(s);
 const cleared = () => { try { return JSON.parse(localStorage.getItem('cracks-cleared') || '[]'); } catch(e){ return []; } };
-const goTitle = () => location.href = 'select-b.html';
+const goTitle = () => location.href = 'cracker.html';
 
 const caseId = new URLSearchParams(location.search).get('case');
 fetch('cracks.json').then(r => r.json()).then(d => {

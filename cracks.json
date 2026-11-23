@@ -548,6 +548,581 @@
     ],
     "teaching": "痕跡が本物かを、時刻と台帳で裏付ける。予防の診断では、手続きの穴も「条件」として特定する。"
    }
+  },
+  {
+   "id": "bcase5",
+   "level": 5,
+   "title": "コードの中の鍵",
+   "budget": 6,
+   "symptom": "公開リポジトリの棚卸しで、認証情報らしき文字列が見つかった。本当に侵入に使える条件になっているかを特定する。",
+   "topology": {
+    "nodes": [
+     {
+      "id": "EXT",
+      "x": 10,
+      "y": 44
+     },
+     {
+      "id": "REPO",
+      "x": 36,
+      "y": 30
+     },
+     {
+      "id": "API1",
+      "x": 64,
+      "y": 30
+     },
+     {
+      "id": "DB1",
+      "x": 86,
+      "y": 30
+     }
+    ],
+    "edges": [
+     [
+      "EXT",
+      "REPO"
+     ],
+     [
+      "REPO",
+      "API1"
+     ],
+     [
+      "API1",
+      "DB1"
+     ]
+    ]
+   },
+   "candidates": [
+    {
+     "id": "k5_1",
+     "label": "本番の API キーが平文で公開リポジトリにある",
+     "answer": true
+    },
+    {
+     "id": "k5_2",
+     "label": "テスト用のダミーキー"
+    },
+    {
+     "id": "k5_3",
+     "label": "失効済み証明書の秘密鍵"
+    },
+    {
+     "id": "k5_4",
+     "label": "スキャンの誤検出（実は Private リポジトリ）"
+    }
+   ],
+   "observations": [
+    {
+     "id": "t1",
+     "tool": "scan",
+     "label": "スキャン詳細（検出された文字列）",
+     "cost": 1,
+     "results": {
+      "k5_1": "PROD_FORMAT",
+      "k5_2": "TEST_PREFIX",
+      "k5_3": "CERT_KEY",
+      "k5_4": "PROD_FORMAT"
+     },
+     "display": "本番エンドポイントと対になった、実キーの形式だった"
+    },
+    {
+     "id": "t2",
+     "tool": "audit",
+     "label": "有効性の確認（そのキーで認証を試す）",
+     "cost": 2,
+     "results": {
+      "k5_1": "VALID",
+      "k5_2": "INVALID",
+      "k5_3": "INVALID",
+      "k5_4": "VALID"
+     },
+     "display": "そのキーで本番に認証できた"
+    },
+    {
+     "id": "t3",
+     "tool": "config",
+     "label": "公開範囲の確認（リポジトリ設定）",
+     "cost": 1,
+     "results": {
+      "k5_1": "PUBLIC",
+      "k5_2": "PUBLIC",
+      "k5_3": "PUBLIC",
+      "k5_4": "PRIVATE"
+     },
+     "display": "リポジトリは Public（誰でも閲覧可能）"
+    },
+    {
+     "id": "t4",
+     "tool": "log",
+     "label": "発行・ローテーション履歴",
+     "cost": 2,
+     "results": {
+      "k5_1": "NO_ROTATION",
+      "k5_2": "NONE",
+      "k5_3": "REVOKED",
+      "k5_4": "NONE"
+     },
+     "display": "キーは発行以来ローテーションされていない"
+    }
+   ],
+   "optimal": [
+    "t1",
+    "t3"
+   ],
+   "explanation": {
+    "evidence_chain": [
+     "t1: 検出物は本番と対になった実キーの形式。ダミーや証明書の鍵ではない",
+     "t3: リポジトリは Public で、誰でも読める状態だった",
+     "t2: 実際に本番へ認証できた。「本物か」「有効か」「誰に見えているか」の3点が揃った入口だった"
+    ],
+    "teaching": "鍵らしき文字列は、3点が揃って初めて入口になる。1つでも欠ければ条件は成立しない。"
+   }
+  },
+  {
+   "id": "bcase6",
+   "level": 6,
+   "title": "全員が管理者",
+   "budget": 7,
+   "symptom": "1台の端末が感染した想定の机上演習で、「1台から全体に広がる」条件が見つかった。本当に横移動が成立する条件を特定する。",
+   "topology": {
+    "nodes": [
+     {
+      "id": "PC1",
+      "x": 10,
+      "y": 30
+     },
+     {
+      "id": "SW1",
+      "x": 30,
+      "y": 30
+     },
+     {
+      "id": "PC2",
+      "x": 56,
+      "y": 16
+     },
+     {
+      "id": "PC3",
+      "x": 56,
+      "y": 46
+     },
+     {
+      "id": "FS1",
+      "x": 82,
+      "y": 30
+     }
+    ],
+    "edges": [
+     [
+      "PC1",
+      "SW1"
+     ],
+     [
+      "SW1",
+      "PC2"
+     ],
+     [
+      "SW1",
+      "PC3"
+     ],
+     [
+      "SW1",
+      "FS1"
+     ]
+    ]
+   },
+   "candidates": [
+    {
+     "id": "k6_1",
+     "label": "全端末で共通のローカル管理者パスワード",
+     "answer": true
+    },
+    {
+     "id": "k6_2",
+     "label": "ファイルサーバの権限が全員フルコントロール"
+    },
+    {
+     "id": "k6_3",
+     "label": "ネットワークがフラット（部署間の遮断なし）"
+    },
+    {
+     "id": "k6_4",
+     "label": "パッチ未適用のサーバ（既知の脆弱性）"
+    }
+   ],
+   "observations": [
+    {
+     "id": "u1",
+     "tool": "audit",
+     "label": "資格情報の監査（管理者パスワードの使い回し）",
+     "cost": 2,
+     "results": {
+      "k6_1": "SHARED_ADMIN",
+      "k6_2": "DIFFERENT",
+      "k6_3": "DIFFERENT",
+      "k6_4": "DIFFERENT"
+     },
+     "display": "全端末で同一のローカル管理者パスワードだった"
+    },
+    {
+     "id": "u2",
+     "tool": "config",
+     "label": "ネットワーク構成の確認（セグメント分離）",
+     "cost": 1,
+     "results": {
+      "k6_1": "SEGMENTED",
+      "k6_2": "SEGMENTED",
+      "k6_3": "FLAT",
+      "k6_4": "SEGMENTED"
+     },
+     "display": "部署間はセグメントで区切られている"
+    },
+    {
+     "id": "u3",
+     "tool": "config",
+     "label": "権限の棚卸し（ファイルサーバ）",
+     "cost": 1,
+     "results": {
+      "k6_1": "NORMAL",
+      "k6_2": "FULL_ALL",
+      "k6_3": "NORMAL",
+      "k6_4": "NORMAL"
+     },
+     "display": "ファイルサーバの権限は部署単位で絞られている"
+    },
+    {
+     "id": "u4",
+     "tool": "scan",
+     "label": "脆弱性スキャン（サーバ群）",
+     "cost": 1,
+     "results": {
+      "k6_1": "PATCHED",
+      "k6_2": "PATCHED",
+      "k6_3": "PATCHED",
+      "k6_4": "VULN_PRESENT"
+     },
+     "display": "サーバのパッチは最新"
+    },
+    {
+     "id": "u5",
+     "tool": "authlog",
+     "label": "演習ログ（横移動の試行記録）",
+     "cost": 2,
+     "results": {
+      "k6_1": "LATERAL_OK",
+      "k6_2": "REACH_ONLY",
+      "k6_3": "REACH_ONLY",
+      "k6_4": "REACH_ONLY"
+     },
+     "display": "演習で、管理者パスワードによる他端末へのログインが成功した"
+    }
+   ],
+   "optimal": [
+    "u1"
+   ],
+   "explanation": {
+    "evidence_chain": [
+     "u2/u3/u4: 到達範囲・権限・パッチは想定どおりで、広がりの条件はそこにはない",
+     "u1: 全端末で管理者パスワードが共通だった。1台から取れた資格情報が全端末で使える",
+     "u5: 演習の試行でも、実際に他端末へログインできていた"
+    ],
+    "teaching": "横移動の成立は「到達できるか」ではなく「認証を使い回せるか」で決まることが多い。共通パスワードは1台の侵害を全体に変える。"
+   }
+  },
+  {
+   "id": "bcase7",
+   "level": 7,
+   "title": "消えたはずの入口",
+   "budget": 6,
+   "symptom": "使っていないはずの外部向けサービスに、外部からアクセスの痕跡があった。入口として成立する条件を特定する。",
+   "topology": {
+    "nodes": [
+     {
+      "id": "EXT",
+      "x": 8,
+      "y": 30
+     },
+     {
+      "id": "DNS1",
+      "x": 30,
+      "y": 30
+     },
+     {
+      "id": "HOST",
+      "x": 58,
+      "y": 30
+     },
+     {
+      "id": "WEB1",
+      "x": 84,
+      "y": 30
+     }
+    ],
+    "edges": [
+     [
+      "EXT",
+      "DNS1"
+     ],
+     [
+      "DNS1",
+      "HOST"
+     ],
+     [
+      "HOST",
+      "WEB1"
+     ]
+    ]
+   },
+   "candidates": [
+    {
+     "id": "k7_1",
+     "label": "サブドメインの CNAME が失効した外部サービスを指したまま",
+     "answer": true
+    },
+    {
+     "id": "k7_2",
+     "label": "テスト環境の外部公開"
+    },
+    {
+     "id": "k7_3",
+     "label": "旧 VPN 装置が撤去されずに生きている"
+    },
+    {
+     "id": "k7_4",
+     "label": "DNS のゾーン転送が許可されている"
+    }
+   ],
+   "observations": [
+    {
+     "id": "v1",
+     "tool": "audit",
+     "label": "DNS の棚卸し（全レコード）",
+     "cost": 2,
+     "results": {
+      "k7_1": "DANGLING",
+      "k7_2": "NORMAL",
+      "k7_3": "NORMAL",
+      "k7_4": "AXFR_OPEN"
+     },
+     "display": "使われていないサブドメインが、外部のホスティングサービスを指したままだった"
+    },
+    {
+     "id": "v2",
+     "tool": "test",
+     "label": "指し先の状態確認",
+     "cost": 2,
+     "results": {
+      "k7_1": "CLAIMABLE",
+      "k7_2": "ACTIVE",
+      "k7_3": "ACTIVE",
+      "k7_4": "ACTIVE"
+     },
+     "display": "指し先のサービスは解約済みで、名前が空いていた（第三者が取得可能）"
+    },
+    {
+     "id": "v3",
+     "tool": "scan",
+     "label": "到達性スキャン（旧資産）",
+     "cost": 1,
+     "results": {
+      "k7_1": "NORMAL",
+      "k7_2": "TEST_ALIVE",
+      "k7_3": "OLD_VPN_ALIVE",
+      "k7_4": "NORMAL"
+     },
+     "display": "旧 VPN 装置は応答しない"
+    },
+    {
+     "id": "v4",
+     "tool": "config",
+     "label": "テスト環境の中身の確認",
+     "cost": 1,
+     "results": {
+      "k7_1": "NA",
+      "k7_2": "DUMMY",
+      "k7_3": "NA",
+      "k7_4": "NA"
+     },
+     "display": "対象なし"
+    },
+    {
+     "id": "v5",
+     "tool": "audit",
+     "label": "ゾーン転送の試行",
+     "cost": 2,
+     "results": {
+      "k7_1": "BLOCKED",
+      "k7_2": "BLOCKED",
+      "k7_3": "BLOCKED",
+      "k7_4": "LEAK_ONLY"
+     },
+     "display": "ゾーン転送は拒否された"
+    }
+   ],
+   "optimal": [
+    "v1"
+   ],
+   "explanation": {
+    "evidence_chain": [
+     "v3: 旧装置やテスト環境は、入口になる状態ではなかった",
+     "v1/v2: 使われていないサブドメインが、解約済みの外部サービスを指したまま。第三者がその名前を取得すれば、自社ドメインの顔で入口が作れる",
+     "v5: ゾーン転送は閉じていた（情報漏洩の条件もない）"
+    ],
+    "teaching": "入口は「作ったもの」だけでなく「消し忘れたもの」にも生まれる。DNS の指し先の生存確認までが棚卸し。"
+   }
+  },
+  {
+   "id": "bcase8",
+   "level": 8,
+   "title": "ログのない夜",
+   "budget": 7,
+   "symptom": "深夜の不審な通信の痕跡が見つかった。調査すると、1つの穴では説明がつかない。侵入が成立した条件の「組」を特定する。",
+   "topology": {
+    "nodes": [
+     {
+      "id": "EXT",
+      "x": 8,
+      "y": 44
+     },
+     {
+      "id": "VPN1",
+      "x": 30,
+      "y": 30
+     },
+     {
+      "id": "SW1",
+      "x": 52,
+      "y": 30
+     },
+     {
+      "id": "FS1",
+      "x": 78,
+      "y": 16
+     },
+     {
+      "id": "SRV1",
+      "x": 78,
+      "y": 46
+     }
+    ],
+    "edges": [
+     [
+      "EXT",
+      "VPN1"
+     ],
+     [
+      "VPN1",
+      "SW1"
+     ],
+     [
+      "SW1",
+      "FS1"
+     ],
+     [
+      "SW1",
+      "SRV1"
+     ]
+    ]
+   },
+   "candidates": [
+    {
+     "id": "k8_1",
+     "label": "［退職者アカウント有効］＋［VPN の MFA 未設定］",
+     "answer": true
+    },
+    {
+     "id": "k8_2",
+     "label": "［退職者アカウント有効］＋［ロックアウトなし］"
+    },
+    {
+     "id": "k8_3",
+     "label": "［共有アカウントの弱いパスワード］＋［MFA 未設定］"
+    },
+    {
+     "id": "k8_4",
+     "label": "［共有アカウントの弱いパスワード］＋［ロックアウトなし］"
+    }
+   ],
+   "observations": [
+    {
+     "id": "w1",
+     "tool": "authlog",
+     "label": "アクセスログの分析",
+     "cost": 1,
+     "results": {
+      "k8_1": "EXUSER_LOGIN",
+      "k8_2": "EXUSER_LOGIN",
+      "k8_3": "SHARED_LOGIN",
+      "k8_4": "SHARED_LOGIN"
+     },
+     "display": "退職者アカウントで VPN ログインが成功していた"
+    },
+    {
+     "id": "w2",
+     "tool": "audit",
+     "label": "アカウント台帳の照合",
+     "cost": 2,
+     "results": {
+      "k8_1": "STILL_ACTIVE",
+      "k8_2": "STILL_ACTIVE",
+      "k8_3": "SHARED_ACTIVE",
+      "k8_4": "SHARED_ACTIVE"
+     },
+     "display": "退職者アカウントが無効化されず、有効なままだった"
+    },
+    {
+     "id": "w3",
+     "tool": "config",
+     "label": "ポリシー確認（VPN の MFA）",
+     "cost": 1,
+     "results": {
+      "k8_1": "NO_MFA",
+      "k8_2": "MFA_ON",
+      "k8_3": "NO_MFA",
+      "k8_4": "MFA_ON"
+     },
+     "display": "VPN に MFA が未設定だった"
+    },
+    {
+     "id": "w4",
+     "tool": "audit",
+     "label": "パスワード監査（関係アカウントの強度）",
+     "cost": 2,
+     "results": {
+      "k8_1": "STRONG",
+      "k8_2": "STRONG",
+      "k8_3": "WEAK",
+      "k8_4": "WEAK"
+     },
+     "display": "そのアカウントのパスワード自体は強固だった"
+    },
+    {
+     "id": "w5",
+     "tool": "authlog",
+     "label": "試行パターンの詳細",
+     "cost": 2,
+     "results": {
+      "k8_1": "FEW_TRIES",
+      "k8_2": "BRUTE_TRACE",
+      "k8_3": "FEW_TRIES",
+      "k8_4": "BRUTE_TRACE"
+     },
+     "display": "失敗は数回だけ（パスワードを知っていた形跡）"
+    }
+   ],
+   "optimal": [
+    "w1",
+    "w3"
+   ],
+   "explanation": {
+    "evidence_chain": [
+     "w1/w2: 使われたのは退職者アカウントで、しかも有効なままだった",
+     "w5/w4: 試行は数回だけでパスワードは強固 ＝ 総当たりではなく、知っている者による使用",
+     "w3: 最後の砦の MFA がなかった。アカウントが生きていても MFA があれば止まり、MFA がなくてもアカウントが消えていれば成立しなかった"
+    ],
+    "teaching": "条件は組で見る。単独では入口にならない穴同士が、揃ったときに初めて成立する。最後の1ピースがどれかを特定するのが予防の診断の到達点。"
+   }
   }
  ]
 }
