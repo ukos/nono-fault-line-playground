@@ -1,0 +1,481 @@
+{
+ "cases": [
+  {
+   "budget": 4,
+   "candidates": [
+    {
+     "answer": true,
+     "id": "c1_1",
+     "label": "SW1–SW2 リンク障害"
+    },
+    {
+     "id": "c1_2",
+     "label": "SW2–SRV1 リンク障害"
+    },
+    {
+     "id": "c1_3",
+     "label": "SRV1 ダウン"
+    },
+    {
+     "id": "c1_4",
+     "label": "SW2 ダウン"
+    }
+   ],
+   "explanation": {
+    "evidence_chain": [
+     "o1: PC2→SRV1 が成功する時点で、SW2 より先（SRV1 側）は無事。障害は PC1 側の区間 SW1–SW2 に絞られる"
+    ],
+    "teaching": "観測の送信元を変えるだけで障害区間が割れる。o1 の1観測で一意化できるのが理想手順。"
+   },
+   "id": "case1",
+   "level": 1,
+   "observations": [
+    {
+     "cost": 1,
+     "id": "o1",
+     "label": "ping PC2→SRV1",
+     "results": {
+      "c1_1": "OK",
+      "c1_2": "FAIL",
+      "c1_3": "FAIL",
+      "c1_4": "FAIL"
+     },
+     "tool": "ping",
+     "display": "応答あり — 4/4 受信, 平均 1ms"
+    },
+    {
+     "cost": 1,
+     "id": "o2",
+     "label": "ping PC1→SW2 管理IP",
+     "results": {
+      "c1_1": "FAIL",
+      "c1_2": "OK",
+      "c1_3": "OK",
+      "c1_4": "FAIL"
+     },
+     "tool": "ping",
+     "display": "応答なし — 4/4 ロスト"
+    },
+    {
+     "cost": 1,
+     "id": "o3",
+     "label": "SNMP SW1（SW2 向けポート状態）",
+     "results": {
+      "c1_1": "DOWN",
+      "c1_2": "UP",
+      "c1_3": "UP",
+      "c1_4": "DOWN"
+     },
+     "tool": "snmp",
+     "display": "Gi0/2（SW2 向け）: down/down"
+    },
+    {
+     "cost": 1,
+     "id": "o4",
+     "label": "SNMP SW2（SRV1 向けポート状態）",
+     "results": {
+      "c1_1": "UNREACHABLE",
+      "c1_2": "DOWN",
+      "c1_3": "UP",
+      "c1_4": "UNREACHABLE"
+     },
+     "tool": "snmp",
+     "display": "応答なし（SNMP タイムアウト）"
+    }
+   ],
+   "symptom": "PC1 から業務サーバ SRV1 に接続できない（監視の ping PC1→SRV1 も失敗）。PC2 の利用者からは申告なし。",
+   "title": "つながらない朝",
+   "topology": {
+    "edges": [
+     [
+      "PC1",
+      "SW1"
+     ],
+     [
+      "SW1",
+      "SW2"
+     ],
+     [
+      "SW2",
+      "PC2"
+     ],
+     [
+      "SW2",
+      "SRV1"
+     ]
+    ],
+    "nodes": [
+     {
+      "id": "PC1",
+      "x": 10,
+      "y": 32
+     },
+     {
+      "id": "SW1",
+      "x": 32,
+      "y": 32
+     },
+     {
+      "id": "SW2",
+      "x": 56,
+      "y": 32
+     },
+     {
+      "id": "PC2",
+      "x": 56,
+      "y": 10
+     },
+     {
+      "id": "SRV1",
+      "x": 84,
+      "y": 32
+     }
+    ]
+   },
+   "optimal": [
+    "o1"
+   ]
+  },
+  {
+   "budget": 6,
+   "candidates": [
+    {
+     "id": "c2_1",
+     "label": "DNS1 の DNS サービス停止"
+    },
+    {
+     "answer": true,
+     "id": "c2_2",
+     "label": "web.local の A レコード削除"
+    },
+    {
+     "id": "c2_3",
+     "label": "PC1 のリゾルバ設定誤り（旧 DNS 10.0.0.99 を参照）"
+    },
+    {
+     "id": "c2_4",
+     "label": "FW1 が UDP/53 を遮断"
+    },
+    {
+     "id": "c2_5",
+     "label": "SRV1 の Web サービス停止"
+    },
+    {
+     "id": "c2_6",
+     "label": "DNS1 のゾーン未ロード（全レコード応答不可）"
+    }
+   ],
+   "explanation": {
+    "evidence_chain": [
+     "q1: NXDOMAIN は「サーバが応答し、レコードが無い」という確定情報。サービス停止や遮断では出ない",
+     "q3: 対照クエリ mail.local は正しく引けるので、ゾーン全体の障害（c2_6）でもない",
+     "以上から web.local のレコードだけが無い ＝ A レコード削除"
+    ],
+    "teaching": "NXDOMAIN／REFUSED／TIMEOUT は原因の切り分けそのもの。対照クエリ（別の名前を引く）で『その名前だけか、ゾーン全体か』を分ける。"
+   },
+   "id": "case2",
+   "level": 2,
+   "observations": [
+    {
+     "cost": 1,
+     "id": "q1",
+     "label": "DNSクエリ（標準リゾルバ）web.local",
+     "results": {
+      "c2_1": "REFUSED",
+      "c2_2": "NXDOMAIN",
+      "c2_3": "TIMEOUT",
+      "c2_4": "TIMEOUT",
+      "c2_5": "ANSWER",
+      "c2_6": "NXDOMAIN"
+     },
+     "tool": "dns",
+     "display": "応答: NXDOMAIN（web.local に対応するレコードなし）"
+    },
+    {
+     "cost": 1,
+     "id": "q2",
+     "label": "DNSクエリ @DNS1 web.local",
+     "results": {
+      "c2_1": "REFUSED",
+      "c2_2": "NXDOMAIN",
+      "c2_3": "ANSWER",
+      "c2_4": "TIMEOUT",
+      "c2_5": "ANSWER",
+      "c2_6": "NXDOMAIN"
+     },
+     "tool": "dns",
+     "display": "応答: NXDOMAIN（DNS1 が直接応答）"
+    },
+    {
+     "cost": 1,
+     "id": "q3",
+     "label": "DNSクエリ @DNS1 mail.local（対照クエリ）",
+     "results": {
+      "c2_1": "REFUSED",
+      "c2_2": "ANSWER",
+      "c2_3": "ANSWER",
+      "c2_4": "TIMEOUT",
+      "c2_5": "ANSWER",
+      "c2_6": "NXDOMAIN"
+     },
+     "tool": "dns",
+     "display": "応答: 10.0.0.21（mail.local は正常に引ける）"
+    },
+    {
+     "cost": 1,
+     "id": "q4",
+     "label": "ping PC1→DNS1",
+     "results": {
+      "c2_1": "OK",
+      "c2_2": "OK",
+      "c2_3": "OK",
+      "c2_4": "OK",
+      "c2_5": "OK",
+      "c2_6": "OK"
+     },
+     "tool": "ping",
+     "display": "応答あり — 4/4 受信"
+    },
+    {
+     "cost": 1,
+     "id": "q5",
+     "label": "TCP接続 SRV1:443（IP指定）",
+     "results": {
+      "c2_1": "OK",
+      "c2_2": "OK",
+      "c2_3": "OK",
+      "c2_4": "OK",
+      "c2_5": "FAIL",
+      "c2_6": "OK"
+     },
+     "tool": "tcp",
+     "display": "接続成功（TCP/443, IP 指定）"
+    }
+   ],
+   "symptom": "PC1 から社内ポータル web.local（10.0.0.20）が開けない。IP 直打ちの他サイトは使えるという申告。DNS は DNS1（10.0.0.10）。",
+   "title": "名前が引けない",
+   "topology": {
+    "edges": [
+     [
+      "PC1",
+      "SW1"
+     ],
+     [
+      "SW1",
+      "FW1"
+     ],
+     [
+      "FW1",
+      "DNS1"
+     ],
+     [
+      "FW1",
+      "SRV1"
+     ]
+    ],
+    "nodes": [
+     {
+      "id": "PC1",
+      "x": 10,
+      "y": 30
+     },
+     {
+      "id": "SW1",
+      "x": 30,
+      "y": 30
+     },
+     {
+      "id": "FW1",
+      "x": 52,
+      "y": 30
+     },
+     {
+      "id": "DNS1",
+      "x": 80,
+      "y": 12
+     },
+     {
+      "id": "SRV1",
+      "x": 80,
+      "y": 48
+     }
+    ]
+   },
+   "optimal": [
+    "q1",
+    "q3"
+   ]
+  },
+  {
+   "budget": 6,
+   "candidates": [
+    {
+     "answer": true,
+     "id": "c3_1",
+     "label": "FW1 の ACL が TCP/443 を遮断"
+    },
+    {
+     "id": "c3_2",
+     "label": "SRV1 の HTTPS サービス停止"
+    },
+    {
+     "id": "c3_3",
+     "label": "SRV1 のホスト FW が 443 を遮断"
+    },
+    {
+     "id": "c3_4",
+     "label": "経路上の MTU ブラックホール"
+    }
+   ],
+   "explanation": {
+    "evidence_chain": [
+     "r3: 443 は TIMEOUT（途中で落ちている）。REFUSED でないのでサービス停止ではない",
+     "r4: 同一セグメントの SRV2 からは 443 が通る。SRV1 側（ホスト FW・サービス）は無事で、経路上の FW1 が落としている",
+     "r6: FW1 の deny ログが最終確認になる"
+    ],
+    "teaching": "TIMEOUT と REFUSED の区別＋試験する場所（セグメント）を変えることで、装置 ACL とホスト側問題を切り分ける。ログは決定的だがコストが高い。"
+   },
+   "id": "case3",
+   "level": 3,
+   "observations": [
+    {
+     "cost": 1,
+     "id": "r1",
+     "label": "ping PC1→SRV1",
+     "results": {
+      "c3_1": "OK",
+      "c3_2": "OK",
+      "c3_3": "OK",
+      "c3_4": "OK"
+     },
+     "tool": "ping",
+     "display": "応答あり — 4/4 受信"
+    },
+    {
+     "cost": 1,
+     "id": "r2",
+     "label": "TCP接続 PC1→SRV1:22",
+     "results": {
+      "c3_1": "OK",
+      "c3_2": "OK",
+      "c3_3": "OK",
+      "c3_4": "OK"
+     },
+     "tool": "tcp",
+     "display": "接続成功（TCP/22）"
+    },
+    {
+     "cost": 1,
+     "id": "r3",
+     "label": "TCP接続 PC1→SRV1:443",
+     "results": {
+      "c3_1": "TIMEOUT",
+      "c3_2": "REFUSED",
+      "c3_3": "TIMEOUT",
+      "c3_4": "CONNECT_OK"
+     },
+     "tool": "tcp",
+     "display": "タイムアウト（応答なし）"
+    },
+    {
+     "cost": 1,
+     "id": "r4",
+     "label": "TCP接続 SRV2→SRV1:443（同一セグメントから）",
+     "results": {
+      "c3_1": "OK",
+      "c3_2": "REFUSED",
+      "c3_3": "TIMEOUT",
+      "c3_4": "OK"
+     },
+     "tool": "tcp",
+     "display": "接続成功（TCP/443）"
+    },
+    {
+     "cost": 1,
+     "id": "r5",
+     "label": "HTTPS取得 PC1→SRV1",
+     "results": {
+      "c3_1": "FAIL_CONNECT",
+      "c3_2": "FAIL_CONNECT",
+      "c3_3": "FAIL_CONNECT",
+      "c3_4": "STALL_AFTER_CONNECT"
+     },
+     "tool": "tcp",
+     "display": "接続できませんでした（TCP 接続段階で失敗）"
+    },
+    {
+     "cost": 2,
+     "id": "r6",
+     "label": "FW1 ログ（443 deny 検索）",
+     "results": {
+      "c3_1": "DENY_LOG_FOUND",
+      "c3_2": "NONE",
+      "c3_3": "NONE",
+      "c3_4": "NONE"
+     },
+     "tool": "log",
+     "display": "deny tcp 10.0.1.5 → 10.0.0.20 eq 443 のログを検出"
+    }
+   ],
+   "symptom": "PC1 から社内ポータル https://10.0.0.20/（SRV1）に接続できない。SRV1 は FW1 の内側、SRV2 は SRV1 と同一セグメント。",
+   "title": "443 だけ通らない",
+   "topology": {
+    "edges": [
+     [
+      "PC1",
+      "SW1"
+     ],
+     [
+      "SW1",
+      "FW1"
+     ],
+     [
+      "FW1",
+      "SRV2"
+     ],
+     [
+      "FW1",
+      "SRV1"
+     ],
+     [
+      "SRV2",
+      "SRV1"
+     ]
+    ],
+    "nodes": [
+     {
+      "id": "PC1",
+      "x": 10,
+      "y": 30
+     },
+     {
+      "id": "SW1",
+      "x": 30,
+      "y": 30
+     },
+     {
+      "id": "FW1",
+      "x": 52,
+      "y": 30
+     },
+     {
+      "id": "SRV2",
+      "x": 78,
+      "y": 12
+     },
+     {
+      "id": "SRV1",
+      "x": 78,
+      "y": 48
+     }
+    ]
+   },
+   "optimal": [
+    "r3",
+    "r4"
+   ]
+  }
+ ],
+ "note": "結果は候補ごとに定義する。検証器は (1) 全候補の署名の一意性 (2) 予算内で正解を一意化できる観測集合の存在 (3) 全ダミー候補の否定可能性 を検査する。",
+ "version": "0.1"
+}
