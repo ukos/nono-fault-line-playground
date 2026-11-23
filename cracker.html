@@ -8,37 +8,51 @@
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" type="image/png" href="icon-192.png">
 <style>
-  :root{ --bg:#04070f; --panel:#0a1120; --line:#1d3355; --txt:#dfe9f5; --mut:#8fa3bd; --gr:#ff6a4d; }
+  :root{ --bg:#04070f; --panel:#0a1120; --line:#1d3355; --txt:#dfe9f5; --mut:#8fa3bd; --or:#ff5c39; --or2:#ff6a4d; }
   *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
   html,body{ margin:0; padding:0; background:var(--bg); color:var(--txt); font-family:"Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif; }
-  #screen{ max-width:640px; margin:0 auto; padding:34px 18px 44px; text-align:center; }
-  .side-label{ color:var(--gr); font-size:12px; letter-spacing:.34em; font-weight:700; }
-  h1{ font-size:42px; letter-spacing:.08em; margin:10px 0 4px; color:var(--gr); text-shadow:0 0 26px rgba(255,106,77,.35); }
-  .sub{ color:var(--mut); font-size:14px; letter-spacing:.12em; margin-bottom:28px; }
-  .card{ background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:18px; text-align:left;
-    font-size:14px; line-height:1.9; color:var(--txt); }
-  .card b{ color:var(--gr); }
-  .soon{ margin:26px 0 8px; color:var(--mut); font-size:13px; letter-spacing:.18em; }
-  #btn-back{ display:inline-block; background:transparent; color:var(--txt); border:1px solid var(--line); border-radius:12px;
-    padding:13px 30px; font-size:15px; font-weight:700; cursor:pointer; font-family:inherit; margin-top:18px; }
+  #screen-title{ max-width:880px; margin:0 auto; padding:18px 14px 40px; text-align:center; }
+  .side-label{ color:var(--or2); font-size:12px; letter-spacing:.34em; font-weight:700; margin-top:26px; }
+  .wordmark{ font-size:64px; font-weight:900; letter-spacing:.1em; color:var(--or2); line-height:1.1;
+    text-shadow:0 0 30px rgba(255,106,77,.4); margin:8px 0 4px; font-family:"Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif; }
+  .tagline{ color:var(--mut); margin:16px 0 6px; text-align:center; }
+  .tagline .l1{ font-size:15px; letter-spacing:.1em; color:var(--txt); text-align:center; }
+  #screen-title .side{ display:flex; flex-direction:column; align-items:center; }
+  #btn-start{ display:inline-block; background:var(--or); color:#ffffff; border:none; border-radius:12px;
+    width:min(80vw,330px); padding:16px 22px; font-size:17px; font-weight:800; letter-spacing:.06em; cursor:pointer; font-family:inherit; box-shadow:0 0 22px rgba(255,92,57,.35);
+    text-align:center; white-space:nowrap; }
+  #btn-start:active{ transform:translateY(1px); }
+  #btn-back{ display:inline-block; background:transparent; color:var(--txt); border:1px solid var(--line); border-radius:12px; margin-top:14px;
+    width:min(80vw,330px); padding:16px 22px; font-size:17px; font-weight:800; letter-spacing:.06em; cursor:pointer; font-family:inherit;
+    text-align:center; white-space:nowrap; }
   #btn-back:active{ transform:translateY(1px); }
+  /* 横向き: ワードマークを左、メニューを右に並べる */
+  @media (orientation: landscape) and (max-height: 560px){
+    #screen-title{ display:flex; align-items:center; justify-content:center; gap:30px;
+      min-height:100dvh; padding:12px 22px; }
+    #screen-title .brand{ flex:0 0 auto; }
+    #screen-title .side{ flex:1; justify-content:center; }
+    .side-label{ margin-top:0; }
+    .tagline{ margin:0 0 6px; }
+  }
 </style>
 </head>
 <body>
-<div id="screen">
-  <div class="side-label">SIDE B</div>
-  <h1>CRACKS</h1>
-  <div class="sub">ホワイトハッカー育成シナリオ</div>
-  <div class="card">
-    痕跡を追い、侵入が成立する条件を特定せよ。<br>
-    認証ログ、パケットキャプチャ、脆弱性スキャンの結果を<b>観測</b>し、
-    侵入経路と脆弱な設定の候補を<b>消去</b>して、守るべき一点を<b>特定</b>する。
-    FAULT LINE と同じ診断エンジンで学ぶ、防御側のシナリオ集。
+<div id="screen-title">
+  <div class="brand">
+    <div class="side-label">SIDE B</div>
+    <div class="wordmark">CRACKS</div>
   </div>
-  <div class="soon">― シナリオ準備中 ―</div>
-  <button id="btn-back">◀ タイトルへ戻る</button>
+  <div class="side">
+    <div class="tagline">
+      <div class="l1">痕跡を追い、侵入が成立する条件を特定せよ。</div>
+    </div>
+    <button id="btn-start">▶ シナリオを選ぶ</button>
+    <button id="btn-back">◀ FAULT LINE へ戻る</button>
+  </div>
 </div>
 <script>
+  document.getElementById('btn-start').onclick = () => location.href = 'select-b.html';
   document.getElementById('btn-back').onclick = () => location.href = 'index.html';
 </script>
 </body>

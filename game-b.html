@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>CRACKS — プレイ中</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<style>
+  :root{ --bg:#04070f; --panel:#0a1120; --panel2:#0d1730; --line:#1d3355; --txt:#dfe9f5; --mut:#8fa3bd; --cy:#ff5c39; --gr:#7dff9a; --rd:#ff5468; --am:#ffc857; }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ margin:0; padding:0; background:var(--bg); color:var(--txt); font-family:"Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif; }
+  button{ font-family:inherit; cursor:pointer; }
+  .hidden{ display:none !important; }
+  #screen-case{ max-width:1100px; margin:0 auto; padding:10px 12px 30px; }
+  header.hud{ display:flex; flex-wrap:wrap; gap:8px 14px; align-items:center; padding:8px 2px 12px; }
+  header.hud .ttl{ font-size:17px; font-weight:800; }
+  header.hud .pill{ font-family:ui-monospace,Menlo,monospace; font-size:12.5px; border:1px solid var(--line); border-radius:999px; padding:3px 10px; color:var(--mut); }
+  header.hud .pill b{ color:var(--cy); font-size:14px; }
+  header.hud .pill.warn b{ color:var(--rd); }
+  #btn-home{ margin-left:auto; background:none; border:1px solid var(--line); color:var(--mut); border-radius:8px; padding:6px 12px; font-size:13px; }
+  .grid{ display:grid; grid-template-columns:1fr; gap:12px; }
+  @media (min-width:820px){ .grid{ grid-template-columns: 1.05fr .95fr; } }
+  .card{ background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:12px 14px; }
+  .card h3{ margin:0 0 8px; font-size:12px; letter-spacing:.14em; color:var(--mut); }
+  #topo{ width:100%; height:auto; display:block; }
+  #symptom{ font-size:14.5px; line-height:1.65; }
+  #console{ font-family:ui-monospace,Menlo,Consolas,monospace; font-size:12.8px; line-height:1.75; background:#050b16; border:1px solid var(--line);
+    border-radius:10px; padding:10px 12px; height:238px; overflow-y:auto; white-space:pre-wrap; word-break:break-all; }
+  #console .cmd{ color:var(--cy); }
+  #console .res{ color:var(--gr); }
+  #console .note{ color:var(--am); }
+  #console .bad{ color:var(--rd); }
+  .obs-btn{ display:flex; justify-content:space-between; gap:8px; width:100%; text-align:left; margin:6px 0; padding:10px 12px;
+    background:var(--panel2); border:1px solid var(--line); border-radius:10px; color:var(--txt); font-size:13.5px; }
+  .obs-btn .cost{ font-family:ui-monospace,Menlo,monospace; color:var(--am); white-space:nowrap; }
+  .obs-btn:disabled{ opacity:.38; cursor:default; }
+  .obs-btn:not(:disabled):active{ border-color:var(--cy); }
+  .cand{ display:flex; align-items:center; gap:10px; margin:6px 0; padding:10px 12px; border:1px solid var(--line); border-radius:10px; background:var(--panel2); transition:opacity .3s; }
+  .cand .lbl{ font-size:14px; }
+  .cand .diag{ margin-left:auto; background:var(--cy); color:#04121f; border:none; border-radius:8px; padding:7px 12px; font-weight:700; font-size:13px; white-space:nowrap; }
+  .cand .diag:disabled{ background:#33506e; color:#9db8d2; }
+  .cand.out{ opacity:.34; }
+  .cand.out .lbl{ text-decoration:line-through; }
+  .cand.wrong{ border-color:var(--rd); }
+  #result{ margin-top:12px; border:1px solid var(--gr); background:linear-gradient(180deg,#0a1f14,#08130c); border-radius:12px; padding:16px; }
+  #result h2{ margin:0 0 6px; font-size:20px; color:var(--gr); }
+  #result .score{ font-family:ui-monospace,Menlo,monospace; font-size:15px; color:var(--am); }
+  #result li{ line-height:1.7; font-size:14px; }
+  #result .teach{ color:var(--mut); font-size:13.5px; line-height:1.7; border-top:1px dashed var(--line); padding-top:8px; margin-top:10px; }
+  #result .row{ display:flex; gap:10px; margin-top:14px; flex-wrap:wrap; }
+  #result .row button{ border-radius:9px; padding:10px 16px; font-size:14px; font-weight:700; border:1px solid var(--line); background:var(--panel2); color:var(--txt); }
+  #result .row button.primary{ background:var(--cy); color:#04121f; border:none; }
+</style>
+</head>
+<body>
+
+<div id="screen-case">
+  <header class="hud">
+    <span class="ttl" id="hud-title"></span>
+    <span class="pill">観測コスト <b id="hud-cost"></b></span>
+    <span class="pill" id="hud-cand-pill">残り候補 <b id="hud-cand"></b></span>
+    <button id="btn-home">ケース選択へ</button>
+  </header>
+  <div class="grid">
+    <div>
+      <div class="card">
+        <h3>TOPOLOGY / 痕跡の報告</h3>
+        <svg id="topo" viewBox="0 0 100 60" aria-label="topology"></svg>
+        <div id="symptom"></div>
+      </div>
+      <div class="card" style="margin-top:12px">
+        <h3>CONSOLE</h3>
+        <div id="console"></div>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <h3>OBSERVE / 観測する</h3>
+        <div id="obs-list"></div>
+      </div>
+      <div class="card" style="margin-top:12px">
+        <h3>CANDIDATES / 成立条件の候補</h3>
+        <div id="cand-list"></div>
+      </div>
+    </div>
+  </div>
+  <div id="result" class="hidden"></div>
+</div>
+
+<script>
+const OUT_JA = { OK:'成功', FAIL:'失敗', DOWN:'down', UP:'up/up', UNREACHABLE:'応答なし',
+  NXDOMAIN:'NXDOMAIN', ANSWER:'正常な回答', TIMEOUT:'タイムアウト', REFUSED:'REFUSED（接続拒否）',
+  CONNECT_OK:'接続成功', FAIL_CONNECT:'接続失敗', STALL_AFTER_CONNECT:'接続後に応答なし',
+  DENY_LOG_FOUND:'denyログあり', NONE:'該当ログなし',
+  LOSS_HEAVY:'損失大', LOSS_MID:'損失あり', LOSS_LATENCY:'遅延大', BCAST_EXTREME:'ブロードキャスト激増',
+  MAC_FLAP:'MACフラッピング', CPU_HIGH:'CPU高負荷', CPU_95:'CPU 95%', DISCARD_UP:'破棄増加', CRC_UP:'CRCエラー増加',
+  STP_TCN_STORM:'STPトポロジ変更が多発', MTU_1400:'MTU 1400', BW_HIGH:'帯域逼迫', PMTUD_BLOCKED:'PMTUD遮断',
+  OK_LATENCY:'成功（遅延あり）', STOP_AT_R2:'R2で停止', TO_R1_STAR:'R1まで到達・以降応答なし',
+  IF_DOWN:'IFダウン', DENY:'denyログあり', WRONG_GW:'ゲートウェイ誤り',
+  VIA_R3:'R3経由', DIRECT:'直接経路', INVALID_DROP:'ステート不一致で破棄', DENY_UP:'denyカウンタ増加',
+  STOP_AT_PC1:'PC1手前で停止', POOL_FULL:'プール枯渇', FREE:'空きあり', APIPA:'APIPAアドレス',
+  WRONG_ADDR:'想定外セグメントのアドレス', LINK_DOWN:'リンクダウン', VLAN_WRONG:'VLAN誤り',
+  REQ_NO_LEASE:'空きなしで応答不可', NO_RESPONSE:'応答なし', SRC_PC_PORT:'一般端末ポートから応答',
+  RETRY_HIGH:'再送率が高い', UTIL_HIGH:'使用率が高い', MANY:'接続台数が多い', NEGO_HALF:'100M/Halfに低下',
+  FULL:'正常リンク', CO_CH:'同一チャネル干渉', WEAK_SIG:'電波が弱い', GOOD:'良好',
+  CPU_HIGH_EVE:'夕方にCPU高負荷', FAST:'高速', SLOW:'低速', TIMEOUT:'タイムアウト', DISK_HIGH:'ディスク高負荷',
+  NOT_ARRIVING:'フレームが届いていない', WRONG_VLAN_FRAMES:'別VLANのフレーム', BLOCKING:'STPブロック中',
+  CHANGE_LOG:'設定変更の記録', WARN:'警告が出る', EXPIRED:'期限切れ', VALID:'正常', SKEW:'時刻ずれ',
+  CHAIN:'チェーン不完全', NAME:'名前不一致', CHANGE:'作業記録あり', UP:'up/up（正常）', DOWN:'ネイバーなし',
+  NEIGHBOR_FULL:'ネイバー確立（Full）', LINK_ERR:'リンクエラー', AUTH_LOG:'認証エラーのログ',
+  AREA_LOG:'エリア不一致のログ', PROC_UP:'プロセス動作中', PROC_DOWN:'プロセス停止', STOP_R1:'R1で停止',
+  HIGH:'使用率が高い', POOL_FAIL:'プール枯渇の失敗ログ', POLICY_CHANGE:'ポリシー変更の記録',
+  SKEW_SRV:'サーバの時刻ずれ', SKEW_PC:'端末の時刻ずれ', SKEW_LOG:'時刻不一致の認証拒否ログ',
+  HALF_ERR:'約半数がエラー', SLOW_MOSTLY:'大半は成功（遅延大）', SESSION_ERR:'セッション途中でエラー',
+  ERR:'エラー応答', HC_UP:'ヘルスチェックはUP', GHOST_MEMBER:'存在しないメンバー',
+  ERR_ON_SRV2:'エラーがSRV2に集中', ERR_BOTH:'エラーが両系に分散', SWITCH:'系の切り替わり',
+  BOTH_OK:'A/AAAAとも正常', WRONG_AAAA:'誤ったAAAA応答', REACH_NEAR:'サイト手前まで到達',
+  WRONG_DST:'無関係な宛先へ', DENY6:'IPv6のdenyログ', NO_V6_ROUTE:'IPv6デフォルトルートなし',
+  ROUTE_EXISTS:'経路あり', STALE_LEASES:'リースの滞留', NO_LEASE_LOG:'空きなし記録が集中',
+  FOCUSED_DICT:'1アカウントに集中（辞書的試行）', SPREAD:'複数ユーザに分散', NO_LOCKOUT:'ロックアウトなし',
+  NO_MFA:'MFA未設定', POLICIES_OK:'ロックアウト・MFAあり', WEAK:'弱いパスワード', STRONG:'強固',
+  VULN_SIG:'脆弱性の署名あり', HIGH_ONE:'Highの指摘1件', MEDIUM:'Mediumの指摘', REACHABLE:'到達可能',
+  BLOCKED:'到達不可', DEFAULT_CREDS:'初期パスワードでログイン可', AUTH_REQUIRED:'認証が必要',
+  SRC_LIMITED:'送信元制限あり', SPF_FAIL_PASSED:'SPF failが素通り', AUTH_OK:'認証は正常',
+  MACRO:'マクロ付き添付', LOOKALIKE:'酷似ドメイン', LINK_NONE:'リンク・添付なし', MACRO_ON:'マクロ有効',
+  MACRO_OFF:'マクロ無効', HIJACK_SIG:'不審なログイン成功', EXUSER_LOGIN:'退職者アカウントのログイン成功',
+  USER_NIGHT:'現職者の深夜ログイン', STILL_ACTIVE:'アカウント有効なまま', DISABLED:'無効化済み',
+  WIDE_ACL:'権限が広すぎる', RAT:'遠隔操作ツールの痕跡' };
+const TOOL_JA = { ping:'PING', traceroute:'TRACEROUTE', dns:'DNS', snmp:'SNMP', tcp:'TCP', log:'LOG', authlog:'AUTH LOG', scan:'SCAN', config:'CONFIG', audit:'AUDIT', header:'HEADER', test:'TEST' };
+
+let cur = null, answerId = null;
+let alive = new Set(), used = new Set(), wronged = new Set(), spent = 0, mistakes = 0, finished = false;
+
+const $ = s => document.querySelector(s);
+const cleared = () => { try { return JSON.parse(localStorage.getItem('cracks-cleared') || '[]'); } catch(e){ return []; } };
+const goTitle = () => location.href = 'select-b.html';
+
+const caseId = new URLSearchParams(location.search).get('case');
+fetch('cracks.json').then(r => r.json()).then(d => {
+  const c = d.cases.find(x => x.id === caseId);
+  if (!c) return goTitle();
+  startCase(c);
+}).catch(goTitle);
+
+function startCase(c){
+  cur = c;
+  answerId = cur.candidates.find(x => x.answer).id;
+  alive = new Set(cur.candidates.map(x => x.id));
+  used = new Set(); wronged = new Set(); spent = 0; mistakes = 0; finished = false;
+  $('#result').classList.add('hidden');
+  $('#hud-title').textContent = `CASE ${cur.level}「${cur.title}」`;
+  $('#symptom').textContent = cur.symptom;
+  drawTopo(); renderObs(); renderCands(); updateHud();
+  $('#console').innerHTML = '';
+  log('痕跡の報告を受付。観測を選んで、侵入が成立する条件を絞り込んでください。', 'note');
+  window.scrollTo(0, 0);
+}
+
+function drawTopo(){
+  const pos = {}; cur.topology.nodes.forEach(n => pos[n.id] = n);
+  const edges = cur.topology.edges.map(([a, b]) => {
+    const A = pos[a], B = pos[b];
+    return `<line x1="${A.x}" y1="${A.y}" x2="${B.x}" y2="${B.y}" stroke="#2b6ea6" stroke-width="0.7"/>`;
+  }).join('');
+  const nodes = cur.topology.nodes.map(n =>
+    `<g><rect x="${n.x - 8}" y="${n.y - 4}" width="16" height="8" rx="1.4" fill="#0d1730" stroke="#ff5c39" stroke-width="0.5"/>
+     <text x="${n.x}" y="${n.y + 1.3}" text-anchor="middle" font-size="3.1" fill="#dfe9f5" font-family="ui-monospace,monospace">${n.id}</text></g>`).join('');
+  $('#topo').innerHTML = edges + nodes;
+}
+
+function renderObs(){
+  $('#obs-list').innerHTML = cur.observations.map(o =>
+    `<button class="obs-btn" data-obs="${o.id}" ${used.has(o.id) || spent + o.cost > cur.budget ? 'disabled' : ''}>
+       <span>[${TOOL_JA[o.tool] || o.tool}] ${o.label}</span><span class="cost">cost ${o.cost}</span>
+     </button>`).join('');
+  document.querySelectorAll('[data-obs]').forEach(b => b.onclick = () => doObs(b.dataset.obs));
+}
+
+function renderCands(){
+  $('#cand-list').innerHTML = cur.candidates.map(c => {
+    const out = !alive.has(c.id), wrong = wronged.has(c.id);
+    return `<div class="cand ${out ? 'out' : ''} ${wrong ? 'wrong' : ''}">
+      <span class="lbl">${c.label}</span>
+      <button class="diag" data-diag="${c.id}" ${out || wrong || finished ? 'disabled' : ''}>${wrong ? '誤診' : 'これが原因'}</button>
+    </div>`;
+  }).join('');
+  document.querySelectorAll('[data-diag]').forEach(b => b.onclick = () => diagnose(b.dataset.diag));
+}
+
+function updateHud(){
+  $('#hud-cost').textContent = `${spent} / ${cur.budget}`;
+  $('#hud-cand').textContent = `${alive.size} / ${cur.candidates.length}`;
+  $('#hud-cand-pill').classList.toggle('warn', alive.size > 1 && spent >= cur.budget);
+}
+
+function log(text, cls){
+  const el = $('#console');
+  el.innerHTML += `<div class="${cls || ''}">${text}</div>`;
+  el.scrollTop = el.scrollHeight;
+}
+
+function doObs(id){
+  if (finished || used.has(id)) return;
+  const o = cur.observations.find(x => x.id === id);
+  if (spent + o.cost > cur.budget) return;
+  used.add(id); spent += o.cost;
+  const actual = o.results[answerId];
+  log(`&gt; ${o.label}`, 'cmd');
+  log(`　${o.display}`, 'res');
+  let cut = 0;
+  cur.candidates.forEach(c => {
+    if (alive.has(c.id) && o.results[c.id] !== actual) { alive.delete(c.id); cut++; }
+  });
+  if (cut) log(`→ 矛盾する候補 ${cut} 件を除外（残り ${alive.size} 件）`, 'note');
+  if (alive.size === 1) log('候補が1件に絞られました。診断できます。', 'note');
+  renderObs(); renderCands(); updateHud();
+}
+
+function diagnose(cid){
+  if (finished) return;
+  if (cid === answerId) return showResult();
+  mistakes++; wronged.add(cid);
+  const cand = cur.candidates.find(c => c.id === cid);
+  const contra = cur.observations.find(o => used.has(o.id) && o.results[cid] !== o.results[answerId]);
+  log(`✗ 誤診：「${cand.label}」`, 'bad');
+  if (contra) log(`　観測『${contra.label}』の結果（${OUT_JA[contra.results[answerId]] || contra.results[answerId]}）と矛盾します。この候補なら「${OUT_JA[contra.results[cid]] || contra.results[cid]}」のはずです。`, 'bad');
+  else log('　まだ否定できる証拠は集まっていませんが、不正解です。観測を増やしてください。', 'bad');
+  renderCands();
+}
+
+function showResult(){
+  finished = true;
+  const score = Math.max(0, 100 - spent * 5 - mistakes * 15);
+  const done = cleared(); if (!done.includes(cur.id)) { done.push(cur.id); localStorage.setItem('cracks-cleared', JSON.stringify(done)); }
+  const chain = cur.explanation.evidence_chain.map(t => `<li>${t}</li>`).join('');
+  const optimal = cur.optimal.map(id => cur.observations.find(o => o.id === id).label).join('　→　');
+  $('#result').innerHTML = `
+    <h2>■ 条件特定 ― ${cur.candidates.find(c => c.answer).label}</h2>
+    <div class="score">SCORE ${score}（観測コスト ${spent} ／ 誤診 ${mistakes} 回）</div>
+    <h3 style="color:var(--mut);font-size:12px;letter-spacing:.14em;margin:14px 0 4px">証拠チェーン</h3>
+    <ul style="margin:0;padding-left:20px">${chain}</ul>
+    <div class="teach"><b>最小コストの手順：</b>${optimal}<br>${cur.explanation.teaching}</div>
+    <div class="row"><button class="primary" id="btn-again">もう一度</button><button id="btn-back">ケース選択へ</button></div>`;
+  $('#result').classList.remove('hidden');
+  renderCands();
+  $('#result').scrollIntoView({ behavior: 'smooth' });
+  $('#btn-again').onclick = () => startCase(cur);
+  $('#btn-back').onclick = goTitle;
+}
+
+$('#btn-home').onclick = goTitle;
+</script>
+</body>
+</html>

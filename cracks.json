@@ -1,0 +1,553 @@
+{
+ "cases": [
+  {
+   "id": "bcase1",
+   "level": 1,
+   "title": "夜中の試行",
+   "budget": 5,
+   "symptom": "深夜、VPN へのログイン失敗が大量に記録された。まだ成功はしていない。侵入が成立してしまう条件を、今のうちに特定する。",
+   "topology": {
+    "nodes": [
+     {
+      "id": "EXT",
+      "x": 8,
+      "y": 30
+     },
+     {
+      "id": "VPN1",
+      "x": 32,
+      "y": 30
+     },
+     {
+      "id": "SW1",
+      "x": 54,
+      "y": 30
+     },
+     {
+      "id": "PC1",
+      "x": 78,
+      "y": 16
+     },
+     {
+      "id": "SRV1",
+      "x": 78,
+      "y": 46
+     }
+    ],
+    "edges": [
+     [
+      "EXT",
+      "VPN1"
+     ],
+     [
+      "VPN1",
+      "SW1"
+     ],
+     [
+      "SW1",
+      "PC1"
+     ],
+     [
+      "SW1",
+      "SRV1"
+     ]
+    ]
+   },
+   "candidates": [
+    {
+     "id": "k1_1",
+     "label": "共有アカウントの弱いパスワード＋ロックアウト未設定",
+     "answer": true
+    },
+    {
+     "id": "k1_2",
+     "label": "正規ユーザのパスワード使い回し（漏洩リスト）"
+    },
+    {
+     "id": "k1_3",
+     "label": "VPN 装置の既知の脆弱性（未パッチ）"
+    },
+    {
+     "id": "k1_4",
+     "label": "MFA 未設定（全ユーザ共通）"
+    }
+   ],
+   "observations": [
+    {
+     "id": "p1",
+     "tool": "authlog",
+     "label": "認証ログの分析（試行パターン）",
+     "cost": 1,
+     "results": {
+      "k1_1": "FOCUSED_DICT",
+      "k1_2": "SPREAD",
+      "k1_3": "NORMAL",
+      "k1_4": "FOCUSED_DICT"
+     },
+     "display": "試行は共有アカウント admin-vpn に集中し、辞書順のパターン"
+    },
+    {
+     "id": "p2",
+     "tool": "scan",
+     "label": "脆弱性スキャン（外部公開ポート）",
+     "cost": 1,
+     "results": {
+      "k1_1": "NORMAL",
+      "k1_2": "NORMAL",
+      "k1_3": "VULN_SIG",
+      "k1_4": "NORMAL"
+     },
+     "display": "公開ポートは想定内（装置の脆弱性の署名なし）"
+    },
+    {
+     "id": "p3",
+     "tool": "config",
+     "label": "ポリシー確認（ロックアウト／MFA）",
+     "cost": 1,
+     "results": {
+      "k1_1": "NO_LOCKOUT",
+      "k1_2": "POLICIES_OK",
+      "k1_3": "POLICIES_OK",
+      "k1_4": "NO_MFA"
+     },
+     "display": "ロックアウトポリシーが未設定（何度失敗しても止まらない）"
+    },
+    {
+     "id": "p4",
+     "tool": "audit",
+     "label": "パスワード監査（共有アカウントの強度）",
+     "cost": 2,
+     "results": {
+      "k1_1": "WEAK",
+      "k1_2": "STRONG",
+      "k1_3": "STRONG",
+      "k1_4": "STRONG"
+     },
+     "display": "共有アカウントのパスワードは辞書語そのものだった"
+    }
+   ],
+   "optimal": [
+    "p1",
+    "p3"
+   ],
+   "explanation": {
+    "evidence_chain": [
+     "p1: 試行は1つの共有アカウントに集中し、辞書的 ＝ 総当たりの前段の痕跡",
+     "p3: ロックアウトがなく、試行を止める仕組みがない",
+     "成立条件は「弱いパスワード」単体ではなく、辞書語＋無制限の試行回数の組だった"
+    ],
+    "teaching": "痕跡のパターンから、狙われている条件を絞る。攻撃が成功する前に潰すのが予防の診断。"
+   }
+  },
+  {
+   "id": "bcase2",
+   "level": 2,
+   "title": "公開サーバの穴",
+   "budget": 5,
+   "symptom": "月次の脆弱性スキャンで複数の指摘が出た。全部が入口になるわけではない。本当に侵入の入口になる条件を特定する。",
+   "topology": {
+    "nodes": [
+     {
+      "id": "EXT",
+      "x": 8,
+      "y": 30
+     },
+     {
+      "id": "FW1",
+      "x": 30,
+      "y": 30
+     },
+     {
+      "id": "WEB1",
+      "x": 56,
+      "y": 30
+     },
+     {
+      "id": "DB1",
+      "x": 82,
+      "y": 30
+     }
+    ],
+    "edges": [
+     [
+      "EXT",
+      "FW1"
+     ],
+     [
+      "FW1",
+      "WEB1"
+     ],
+     [
+      "WEB1",
+      "DB1"
+     ]
+    ]
+   },
+   "candidates": [
+    {
+     "id": "k2_1",
+     "label": "WEB1 の管理画面が外部公開＋初期パスワード",
+     "answer": true
+    },
+    {
+     "id": "k2_2",
+     "label": "CMS プラグインの既知脆弱性（認証後に悪用）"
+    },
+    {
+     "id": "k2_3",
+     "label": "DB ポートの外部公開"
+    },
+    {
+     "id": "k2_4",
+     "label": "サーバ証明書の期限切れ"
+    }
+   ],
+   "observations": [
+    {
+     "id": "q1",
+     "tool": "scan",
+     "label": "スキャン結果の内訳（WEB1）",
+     "cost": 1,
+     "results": {
+      "k2_1": "HIGH_ONE",
+      "k2_2": "HIGH_ONE",
+      "k2_3": "NORMAL",
+      "k2_4": "MEDIUM"
+     },
+     "display": "WEB1 に High の指摘が1件"
+    },
+    {
+     "id": "q2",
+     "tool": "test",
+     "label": "到達性テスト（外部から管理画面へ）",
+     "cost": 1,
+     "results": {
+      "k2_1": "REACHABLE",
+      "k2_2": "REACHABLE",
+      "k2_3": "BLOCKED",
+      "k2_4": "REACHABLE"
+     },
+     "display": "管理画面に外部から到達できる"
+    },
+    {
+     "id": "q3",
+     "tool": "audit",
+     "label": "認証の確認（管理画面にログインを試みる）",
+     "cost": 2,
+     "results": {
+      "k2_1": "DEFAULT_CREDS",
+      "k2_2": "AUTH_REQUIRED",
+      "k2_3": "BLOCKED",
+      "k2_4": "AUTH_REQUIRED"
+     },
+     "display": "初期パスワードのままログインできた"
+    },
+    {
+     "id": "q4",
+     "tool": "config",
+     "label": "FW 設定の確認（DB ポートの許可範囲）",
+     "cost": 1,
+     "results": {
+      "k2_1": "NORMAL",
+      "k2_2": "NORMAL",
+      "k2_3": "SRC_LIMITED",
+      "k2_4": "NORMAL"
+     },
+     "display": "DB ポートは送信元が業務サーバに制限されていた"
+    }
+   ],
+   "optimal": [
+    "q3"
+   ],
+   "explanation": {
+    "evidence_chain": [
+     "q1/q2: High の指摘があり、管理画面には外部から到達できる",
+     "q3: 初期パスワードで実際に入れた ＝ 到達可能性と認証突破の両方が揃った入口",
+     "q4: DB ポートは見かけより制限が効いていた。証明書の期限切れは信頼の問題で、入口ではない"
+    ],
+    "teaching": "指摘の件数ではなく「到達できるか」「認証を越えられるか」で入口かどうかが決まる。"
+   }
+  },
+  {
+   "id": "bcase3",
+   "level": 3,
+   "title": "フィッシングの着信",
+   "budget": 6,
+   "symptom": "従業員から「不審なメールが届いた」と報告。同じ文面が複数人に届いている。突破が成立してしまう条件を特定する。",
+   "topology": {
+    "nodes": [
+     {
+      "id": "EXT",
+      "x": 8,
+      "y": 30
+     },
+     {
+      "id": "MX1",
+      "x": 34,
+      "y": 30
+     },
+     {
+      "id": "SW1",
+      "x": 58,
+      "y": 30
+     },
+     {
+      "id": "PC1",
+      "x": 84,
+      "y": 30
+     }
+    ],
+    "edges": [
+     [
+      "EXT",
+      "MX1"
+     ],
+     [
+      "MX1",
+      "SW1"
+     ],
+     [
+      "SW1",
+      "PC1"
+     ]
+    ]
+   },
+   "candidates": [
+    {
+     "id": "k3_1",
+     "label": "受信側ポリシーの不備（SPF/DMARC が素通り）",
+     "answer": true
+    },
+    {
+     "id": "k3_2",
+     "label": "添付マクロ（端末側で有効）"
+    },
+    {
+     "id": "k3_3",
+     "label": "酷似ドメインの偽サイト（正規の証明書あり）"
+    },
+    {
+     "id": "k3_4",
+     "label": "正規アカウントの乗っ取り（正規経路から送信）"
+    }
+   ],
+   "observations": [
+    {
+     "id": "r1",
+     "tool": "header",
+     "label": "メールヘッダの詳細分析",
+     "cost": 2,
+     "results": {
+      "k3_1": "SPF_FAIL_PASSED",
+      "k3_2": "AUTH_OK",
+      "k3_3": "AUTH_OK",
+      "k3_4": "AUTH_OK"
+     },
+     "display": "SPF fail のメールが、受信側ポリシー（DMARC none）のため素通りしていた"
+    },
+    {
+     "id": "r2",
+     "tool": "scan",
+     "label": "添付・リンクの検査",
+     "cost": 1,
+     "results": {
+      "k3_1": "LINK_NONE",
+      "k3_2": "MACRO",
+      "k3_3": "LOOKALIKE",
+      "k3_4": "LINK_NONE"
+     },
+     "display": "添付もリンクもない（本文のみ）"
+    },
+    {
+     "id": "r3",
+     "tool": "config",
+     "label": "端末設定の確認（マクロポリシー）",
+     "cost": 1,
+     "results": {
+      "k3_1": "MACRO_OFF",
+      "k3_2": "MACRO_ON",
+      "k3_3": "MACRO_OFF",
+      "k3_4": "MACRO_OFF"
+     },
+     "display": "マクロは既定で無効"
+    },
+    {
+     "id": "r4",
+     "tool": "audit",
+     "label": "送信元アカウントの監査",
+     "cost": 2,
+     "results": {
+      "k3_1": "NORMAL",
+      "k3_2": "NORMAL",
+      "k3_3": "NORMAL",
+      "k3_4": "HIJACK_SIG"
+     },
+     "display": "送信元アカウントに不審なログインなし"
+    }
+   ],
+   "optimal": [
+    "r1"
+   ],
+   "explanation": {
+    "evidence_chain": [
+     "r2/r3: 添付もリンクもなく、マクロも無効 ＝ 端末側で成立する条件はない",
+     "r4: 送信元は乗っ取られていない ＝ 偽装メールそのものが届いてしまう側の問題",
+     "r1: SPF fail が素通りしていた。受信側が「落とす」設定になっていなかった"
+    ],
+    "teaching": "すり抜けの理由は受信側のポリシーにある。fail は「届かない」ではなく「届いてしまう」設定になっていないかを見る。"
+   }
+  },
+  {
+   "id": "bcase4",
+   "level": 4,
+   "title": "退職者の影",
+   "budget": 6,
+   "symptom": "監査で、退職済みアカウントによるアクセスの痕跡が見つかった。侵入が成立した条件を特定する。",
+   "topology": {
+    "nodes": [
+     {
+      "id": "EXT",
+      "x": 8,
+      "y": 44
+     },
+     {
+      "id": "VPN1",
+      "x": 30,
+      "y": 30
+     },
+     {
+      "id": "SW1",
+      "x": 52,
+      "y": 30
+     },
+     {
+      "id": "FS1",
+      "x": 78,
+      "y": 16
+     },
+     {
+      "id": "SRV1",
+      "x": 78,
+      "y": 46
+     }
+    ],
+    "edges": [
+     [
+      "EXT",
+      "VPN1"
+     ],
+     [
+      "VPN1",
+      "SW1"
+     ],
+     [
+      "SW1",
+      "FS1"
+     ],
+     [
+      "SW1",
+      "SRV1"
+     ]
+    ]
+   },
+   "candidates": [
+    {
+     "id": "k4_1",
+     "label": "退職者アカウントが無効化されず、VPN から使えた",
+     "answer": true
+    },
+    {
+     "id": "k4_2",
+     "label": "共有フォルダの権限が広すぎる"
+    },
+    {
+     "id": "k4_3",
+     "label": "ログの時刻ずれ（別人のアクセスに見えただけ）"
+    },
+    {
+     "id": "k4_4",
+     "label": "現職者の端末の乗っ取り"
+    }
+   ],
+   "observations": [
+    {
+     "id": "s1",
+     "tool": "authlog",
+     "label": "アクセスログの分析",
+     "cost": 1,
+     "results": {
+      "k4_1": "EXUSER_LOGIN",
+      "k4_2": "NONE",
+      "k4_3": "EXUSER_LOGIN",
+      "k4_4": "USER_NIGHT"
+     },
+     "display": "退職者アカウントで VPN ログインが成功していた"
+    },
+    {
+     "id": "s2",
+     "tool": "audit",
+     "label": "アカウント台帳の照合（退職手続き）",
+     "cost": 2,
+     "results": {
+      "k4_1": "STILL_ACTIVE",
+      "k4_2": "DISABLED",
+      "k4_3": "DISABLED",
+      "k4_4": "DISABLED"
+     },
+     "display": "退職日に無効化されておらず、アカウントが有効なままだった"
+    },
+    {
+     "id": "s3",
+     "tool": "test",
+     "label": "時刻の整合確認（ログサーバの時計）",
+     "cost": 1,
+     "results": {
+      "k4_1": "NORMAL",
+      "k4_2": "NORMAL",
+      "k4_3": "SKEW",
+      "k4_4": "NORMAL"
+     },
+     "display": "ログの時刻は正常"
+    },
+    {
+     "id": "s4",
+     "tool": "config",
+     "label": "権限の棚卸し（共有フォルダ）",
+     "cost": 1,
+     "results": {
+      "k4_1": "NORMAL",
+      "k4_2": "WIDE_ACL",
+      "k4_3": "NORMAL",
+      "k4_4": "NORMAL"
+     },
+     "display": "共有フォルダの権限は部署内のみ"
+    },
+    {
+     "id": "s5",
+     "tool": "audit",
+     "label": "関係端末の監査",
+     "cost": 2,
+     "results": {
+      "k4_1": "NORMAL",
+      "k4_2": "NORMAL",
+      "k4_3": "NORMAL",
+      "k4_4": "RAT"
+     },
+     "display": "関係端末に不審なプロセスなし"
+    }
+   ],
+   "optimal": [
+    "s1",
+    "s3"
+   ],
+   "explanation": {
+    "evidence_chain": [
+     "s1: 退職者アカウントでのログイン成功の痕跡がある",
+     "s3: ログの時刻は正常 ＝ 記録の混線ではなく、本物のアクセス",
+     "s2: アカウントは退職日に無効化されていなかった。成立条件は技術の穴ではなく、退職手続きの運用の穴だった"
+    ],
+    "teaching": "痕跡が本物かを、時刻と台帳で裏付ける。予防の診断では、手続きの穴も「条件」として特定する。"
+   }
+  }
+ ]
+}
