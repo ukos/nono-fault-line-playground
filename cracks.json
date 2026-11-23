@@ -1677,6 +1677,525 @@
     ],
     "teaching": "「気づけない」も条件の1つ。入口の穴と監視の穴が揃うと、侵入は成立し、発見も遅れる。予防の診断は両方を組で特定して完了する。"
    }
+  },
+  {
+   "id": "bcase13",
+   "level": 5,
+   "title": "開けっぱなしの玄関",
+   "budget": 5,
+   "symptom": "外部スキャンの棚卸しで、想定外の公開ポートが見つかった。侵入の条件になっているかを特定する。",
+   "topology": {
+    "nodes": [
+     {
+      "id": "EXT",
+      "x": 10,
+      "y": 30
+     },
+     {
+      "id": "FW1",
+      "x": 32,
+      "y": 30
+     },
+     {
+      "id": "PC1",
+      "x": 58,
+      "y": 30
+     },
+     {
+      "id": "SRV1",
+      "x": 84,
+      "y": 30
+     }
+    ],
+    "edges": [
+     [
+      "EXT",
+      "FW1"
+     ],
+     [
+      "FW1",
+      "PC1"
+     ],
+     [
+      "PC1",
+      "SRV1"
+     ]
+    ]
+   },
+   "candidates": [
+    {
+     "id": "k13_1",
+     "label": "リモートデスクトップ（RDP）が外部に直接公開されている",
+     "answer": true
+    },
+    {
+     "id": "k13_2",
+     "label": "VPN の公開（正規のリモートアクセス）"
+    },
+    {
+     "id": "k13_3",
+     "label": "テスト用サーバの公開（業務データなし）"
+    },
+    {
+     "id": "k13_4",
+     "label": "スキャンの誤検出（実際は FW で遮断）"
+    }
+   ],
+   "observations": [
+    {
+     "id": "ca1",
+     "tool": "scan",
+     "label": "スキャン詳細（公開ポート）",
+     "cost": 1,
+     "results": {
+      "k13_1": "RDP_OPEN",
+      "k13_2": "VPN_ONLY",
+      "k13_3": "TEST_WEB",
+      "k13_4": "RDP_OPEN"
+     },
+     "display": "3389 番ポートが応答した（リモートデスクトップ）"
+    },
+    {
+     "id": "ca2",
+     "tool": "test",
+     "label": "到達性テスト（外部から実際に接続）",
+     "cost": 1,
+     "results": {
+      "k13_1": "REACHABLE",
+      "k13_2": "NA",
+      "k13_3": "REACHABLE",
+      "k13_4": "BLOCKED"
+     },
+     "display": "外部から実際にログイン画面まで到達できた"
+    },
+    {
+     "id": "ca3",
+     "tool": "authlog",
+     "label": "認証ログ（その端末への試行）",
+     "cost": 2,
+     "results": {
+      "k13_1": "FOREIGN_TRIES",
+      "k13_2": "NORMAL",
+      "k13_3": "NONE",
+      "k13_4": "NONE"
+     },
+     "display": "その端末に海外からのログイン試行が多数あった"
+    },
+    {
+     "id": "ca4",
+     "tool": "audit",
+     "label": "資産台帳の照合（公開の記録）",
+     "cost": 2,
+     "results": {
+      "k13_1": "NOT_REGISTERED",
+      "k13_2": "REGISTERED",
+      "k13_3": "REGISTERED_TEST",
+      "k13_4": "NOT_REGISTERED"
+     },
+     "display": "公開の記録は台帳になかった"
+    }
+   ],
+   "optimal": [
+    "ca1",
+    "ca2"
+   ],
+   "explanation": {
+    "evidence_chain": [
+     "ca1/ca2: RDP が見えるだけでなく、実際にログイン画面まで到達できた ＝ 誤検出ではない",
+     "ca4: 台帳に公開の記録がない ＝ 正規の公開でもない",
+     "ca3: 既に海外からの試行が多数来ていた。玄関が開いたまま、ノックされ続けていた"
+    ],
+    "teaching": "スキャンで「見える」と実際に「入れる」は別。到達性の実測と台帳の照合で、公開の正規・不正規を分ける。"
+   }
+  },
+  {
+   "id": "bcase14",
+   "level": 6,
+   "title": "鍵の置き場所",
+   "budget": 5,
+   "symptom": "内部監査で、共有フォルダに認証情報らしいファイルが見つかった。横移動の条件になっているかを特定する。",
+   "topology": {
+    "nodes": [
+     {
+      "id": "PC1",
+      "x": 10,
+      "y": 30
+     },
+     {
+      "id": "SW1",
+      "x": 30,
+      "y": 30
+     },
+     {
+      "id": "FS1",
+      "x": 56,
+      "y": 30
+     },
+     {
+      "id": "SRV1",
+      "x": 82,
+      "y": 30
+     }
+    ],
+    "edges": [
+     [
+      "PC1",
+      "SW1"
+     ],
+     [
+      "SW1",
+      "FS1"
+     ],
+     [
+      "FS1",
+      "SRV1"
+     ]
+    ]
+   },
+   "candidates": [
+    {
+     "id": "k14_1",
+     "label": "共有フォルダのパスワード一覧（現行の資格情報が平文）",
+     "answer": true
+    },
+    {
+     "id": "k14_2",
+     "label": "個人のメモ（本人のフォルダ内）"
+    },
+    {
+     "id": "k14_3",
+     "label": "旧パスワードの一覧（既に無効）"
+    },
+    {
+     "id": "k14_4",
+     "label": "暗号化された保管庫（正規の管理）"
+    }
+   ],
+   "observations": [
+    {
+     "id": "cb1",
+     "tool": "config",
+     "label": "置き場所と権限の確認",
+     "cost": 1,
+     "results": {
+      "k14_1": "SHARED_READABLE",
+      "k14_2": "PRIVATE_FOLDER",
+      "k14_3": "SHARED_READABLE",
+      "k14_4": "SHARED_READABLE"
+     },
+     "display": "全員が読める共有フォルダに置かれていた"
+    },
+    {
+     "id": "cb2",
+     "tool": "audit",
+     "label": "中身の確認（現行の資格情報か）",
+     "cost": 2,
+     "results": {
+      "k14_1": "CURRENT_CREDS",
+      "k14_2": "CURRENT_CREDS",
+      "k14_3": "OLD_CREDS",
+      "k14_4": "ENCRYPTED"
+     },
+     "display": "現行のサーバ管理者パスワードが含まれていた"
+    },
+    {
+     "id": "cb3",
+     "tool": "authlog",
+     "label": "参照ログ（誰が読んだか）",
+     "cost": 1,
+     "results": {
+      "k14_1": "MANY_READERS",
+      "k14_2": "SELF_ONLY",
+      "k14_3": "MANY_READERS",
+      "k14_4": "MANY_READERS"
+     },
+     "display": "複数人が参照していた"
+    },
+    {
+     "id": "cb4",
+     "tool": "audit",
+     "label": "有効性の確認（一覧の値でログインを試す）",
+     "cost": 2,
+     "results": {
+      "k14_1": "VALID",
+      "k14_2": "NA",
+      "k14_3": "INVALID",
+      "k14_4": "NA"
+     },
+     "display": "一覧のパスワードで実際にログインできた"
+    }
+   ],
+   "optimal": [
+    "cb4"
+   ],
+   "explanation": {
+    "evidence_chain": [
+     "cb1/cb3: 全員が読める場所にあり、実際に複数人が参照していた",
+     "cb2: 中身は現行の管理者パスワードだった。旧パスワードの残骸ではない",
+     "cb4: その値で実際にログインできた。「置き場所×現行性×読める人数」が揃った条件だった"
+    ],
+    "teaching": "資格情報の危険は、平文かどうかだけでは決まらない。置き場所・現行性・読める人数の積で見る。"
+   }
+  },
+  {
+   "id": "bcase15",
+   "level": 7,
+   "title": "守られていない端末",
+   "budget": 4,
+   "symptom": "社内ネットワークへの接続記録に、台帳にない端末が混ざっている。入口になる条件を特定する。",
+   "topology": {
+    "nodes": [
+     {
+      "id": "PC9",
+      "x": 10,
+      "y": 30
+     },
+     {
+      "id": "SW1",
+      "x": 32,
+      "y": 30
+     },
+     {
+      "id": "AP1",
+      "x": 56,
+      "y": 16
+     },
+     {
+      "id": "SRV1",
+      "x": 80,
+      "y": 40
+     }
+    ],
+    "edges": [
+     [
+      "PC9",
+      "SW1"
+     ],
+     [
+      "SW1",
+      "AP1"
+     ],
+     [
+      "SW1",
+      "SRV1"
+     ]
+    ]
+   },
+   "candidates": [
+    {
+     "id": "k15_1",
+     "label": "私物端末が対策ソフトなしで業務セグメントに接続できている",
+     "answer": true
+    },
+    {
+     "id": "k15_2",
+     "label": "会議用の貸出端末（管理済み）"
+    },
+    {
+     "id": "k15_3",
+     "label": "IoT 機器（台帳の登録漏れ）"
+    },
+    {
+     "id": "k15_4",
+     "label": "ゲスト用 Wi-Fi の端末（社内とは分離）"
+    }
+   ],
+   "observations": [
+    {
+     "id": "cc1",
+     "tool": "authlog",
+     "label": "接続ログの分析（端末の素性）",
+     "cost": 1,
+     "results": {
+      "k15_1": "PERSONAL_DEVICE",
+      "k15_2": "LOANER",
+      "k15_3": "IOT_DEVICE",
+      "k15_4": "PERSONAL_DEVICE"
+     },
+     "display": "台帳にない個人の端末名だった"
+    },
+    {
+     "id": "cc2",
+     "tool": "config",
+     "label": "接続先の確認（どのネットワークか）",
+     "cost": 1,
+     "results": {
+      "k15_1": "CORP_LAN",
+      "k15_2": "CORP_LAN",
+      "k15_3": "CORP_LAN",
+      "k15_4": "GUEST_NET"
+     },
+     "display": "業務セグメントに接続していた"
+    },
+    {
+     "id": "cc3",
+     "tool": "scan",
+     "label": "対策ソフトの確認（その端末）",
+     "cost": 1,
+     "results": {
+      "k15_1": "NO_EDR",
+      "k15_2": "INSTALLED",
+      "k15_3": "NA",
+      "k15_4": "NO_EDR"
+     },
+     "display": "対策ソフトが入っていない（検出できない）"
+    },
+    {
+     "id": "cc4",
+     "tool": "config",
+     "label": "認証方式の確認（接続の許可）",
+     "cost": 1,
+     "results": {
+      "k15_1": "PW_ONLY",
+      "k15_2": "CERT_AUTH",
+      "k15_3": "PW_ONLY",
+      "k15_4": "PW_ONLY"
+     },
+     "display": "接続はパスワード認証のみ（端末の認証なし）"
+    }
+   ],
+   "optimal": [
+    "cc1",
+    "cc2"
+   ],
+   "explanation": {
+    "evidence_chain": [
+     "cc1/cc2: 台帳にない個人の端末が、分離されたゲストではなく業務セグメントに入っていた",
+     "cc3/cc4: 対策ソフトはなく、接続の許可もパスワードだけ。端末そのものを確かめる仕組みがなかった",
+     "危険なのは「私物であること」ではなく、無対策のまま業務側に入れる組合わせだった"
+    ],
+    "teaching": "条件は組で見る。私物端末でも、ゲスト用に分離されていれば話は別になる。"
+   }
+  },
+  {
+   "id": "bcase16",
+   "level": 8,
+   "title": "最後の砦",
+   "budget": 5,
+   "symptom": "ランサムウェア被害の想定演習で、「暗号化されたうえに復旧もできない」条件の組が見つかった。その組を特定する。",
+   "topology": {
+    "nodes": [
+     {
+      "id": "PC1",
+      "x": 10,
+      "y": 30
+     },
+     {
+      "id": "SW1",
+      "x": 30,
+      "y": 30
+     },
+     {
+      "id": "SRV1",
+      "x": 56,
+      "y": 16
+     },
+     {
+      "id": "BK1",
+      "x": 80,
+      "y": 44
+     }
+    ],
+    "edges": [
+     [
+      "PC1",
+      "SW1"
+     ],
+     [
+      "SW1",
+      "SRV1"
+     ],
+     [
+      "SW1",
+      "BK1"
+     ]
+    ]
+   },
+   "candidates": [
+    {
+     "id": "k16_1",
+     "label": "［管理者資格の使い回し］＋［バックアップが書き換え可能］",
+     "answer": true
+    },
+    {
+     "id": "k16_2",
+     "label": "［管理者資格の使い回し］＋［バックアップは隔離済み］"
+    },
+    {
+     "id": "k16_3",
+     "label": "［共有アカウントの弱いパスワード］＋［バックアップが書き換え可能］"
+    },
+    {
+     "id": "k16_4",
+     "label": "［共有アカウントの弱いパスワード］＋［バックアップは隔離済み］"
+    }
+   ],
+   "observations": [
+    {
+     "id": "cd1",
+     "tool": "audit",
+     "label": "資格情報の監査（管理者の使い回し）",
+     "cost": 2,
+     "results": {
+      "k16_1": "SHARED_ADMIN",
+      "k16_2": "SHARED_ADMIN",
+      "k16_3": "WEAK",
+      "k16_4": "WEAK"
+     },
+     "display": "サーバ間で管理者パスワードが使い回されていた"
+    },
+    {
+     "id": "cd2",
+     "tool": "config",
+     "label": "バックアップの配置確認",
+     "cost": 1,
+     "results": {
+      "k16_1": "REWRITABLE",
+      "k16_2": "ISOLATED_BACKUP",
+      "k16_3": "REWRITABLE",
+      "k16_4": "ISOLATED_BACKUP"
+     },
+     "display": "バックアップは同一セグメントにあり、通常の権限で書き換え可能だった"
+    },
+    {
+     "id": "cd3",
+     "tool": "audit",
+     "label": "復旧訓練の記録",
+     "cost": 2,
+     "results": {
+      "k16_1": "RESTORE_UNTESTED",
+      "k16_2": "RESTORE_UNTESTED",
+      "k16_3": "RESTORE_UNTESTED",
+      "k16_4": "RESTORE_UNTESTED"
+     },
+     "display": "復旧訓練は未実施"
+    },
+    {
+     "id": "cd4",
+     "tool": "config",
+     "label": "権限の確認（バックアップへのアクセス）",
+     "cost": 1,
+     "results": {
+      "k16_1": "ADMIN_CAN_DELETE",
+      "k16_2": "DEDICATED_ONLY",
+      "k16_3": "ADMIN_CAN_DELETE",
+      "k16_4": "DEDICATED_ONLY"
+     },
+     "display": "通常の管理者権限でバックアップの削除も可能だった"
+    }
+   ],
+   "optimal": [
+    "cd1",
+    "cd2"
+   ],
+   "explanation": {
+    "evidence_chain": [
+     "cd1: 管理者パスワードが使い回し ＝ 1台取られれば全サーバに届く",
+     "cd2/cd4: バックアップまで同じ権限で書き換え・削除ができる ＝ 最後の砦が独立していない",
+     "被害の大きさは「入られるか」ではなく、この組が揃っているかで決まっていた"
+    ],
+    "teaching": "ランサムの条件は組で見る。入口の条件と、復旧を断つ条件は分けて点検する。"
+   }
   }
  ]
 }

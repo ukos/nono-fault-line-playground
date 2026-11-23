@@ -3761,6 +3761,661 @@
     ],
     "teaching": "データと給電は別系統。「通信は生きているのに機器が落ちる」なら給電を疑い、挿し替えの対照実験で機器側と供給側を分ける。"
    }
+  },
+  {
+   "id": "case23",
+   "level": 5,
+   "title": "ときどき別の端末につながる",
+   "budget": 5,
+   "symptom": "プリンタに印刷したはずが、ときどき失敗する。応答も不安定で、別の端末につながっているように見えることがある。",
+   "topology": {
+    "nodes": [
+     {
+      "id": "PC1",
+      "x": 12,
+      "y": 30
+     },
+     {
+      "id": "SW1",
+      "x": 34,
+      "y": 30
+     },
+     {
+      "id": "PRN1",
+      "x": 62,
+      "y": 16
+     },
+     {
+      "id": "PC2",
+      "x": 62,
+      "y": 46
+     }
+    ],
+    "edges": [
+     [
+      "PC1",
+      "SW1"
+     ],
+     [
+      "SW1",
+      "PRN1"
+     ],
+     [
+      "SW1",
+      "PC2"
+     ]
+    ]
+   },
+   "candidates": [
+    {
+     "id": "c23_1",
+     "label": "IP アドレスの重複（PC2 が PRN1 と同じアドレス）",
+     "answer": true
+    },
+    {
+     "id": "c23_2",
+     "label": "DNS の誤登録（名前が2つのアドレスを指す）"
+    },
+    {
+     "id": "c23_3",
+     "label": "PRN1 の NIC 故障"
+    },
+    {
+     "id": "c23_4",
+     "label": "SW1 の MAC テーブルの異常"
+    },
+    {
+     "id": "c23_5",
+     "label": "DHCP の二重配布（同じアドレスを2台に配布）"
+    }
+   ],
+   "observations": [
+    {
+     "id": "ae1",
+     "tool": "ping",
+     "label": "ping PC1→PRN1（IP 直指定）",
+     "cost": 1,
+     "results": {
+      "c23_1": "UNSTABLE",
+      "c23_2": "OK",
+      "c23_3": "UNSTABLE",
+      "c23_4": "OK",
+      "c23_5": "UNSTABLE"
+     },
+     "display": "応答が不安定（ときどき別の応答が返る）"
+    },
+    {
+     "id": "ae2",
+     "tool": "snmp",
+     "label": "SNMP SW1（ARP／MAC テーブル）",
+     "cost": 1,
+     "results": {
+      "c23_1": "DUP_MAC",
+      "c23_2": "NORMAL",
+      "c23_3": "NORMAL",
+      "c23_4": "MAC_FLAP",
+      "c23_5": "DUP_MAC"
+     },
+     "display": "同一IPに2つの MAC アドレスが対応している"
+    },
+    {
+     "id": "ae3",
+     "tool": "dns",
+     "label": "DNS クエリ（PRN1 の名前）",
+     "cost": 1,
+     "results": {
+      "c23_1": "ONE_ADDR",
+      "c23_2": "TWO_ADDR",
+      "c23_3": "ONE_ADDR",
+      "c23_4": "ONE_ADDR",
+      "c23_5": "ONE_ADDR"
+     },
+     "display": "名前は1つのアドレスだけを指す"
+    },
+    {
+     "id": "ae4",
+     "tool": "log",
+     "label": "DHCP ログ（配布記録）",
+     "cost": 2,
+     "results": {
+      "c23_1": "NOT_LEASED",
+      "c23_2": "NONE",
+      "c23_3": "NONE",
+      "c23_4": "NONE",
+      "c23_5": "DOUBLE_LEASE"
+     },
+     "display": "PC2 のアドレスは配布記録にない（固定設定だった）"
+    },
+    {
+     "id": "ae5",
+     "tool": "snmp",
+     "label": "SNMP PRN1（機器状態）",
+     "cost": 1,
+     "results": {
+      "c23_1": "NORMAL",
+      "c23_2": "NORMAL",
+      "c23_3": "NIC_ERR",
+      "c23_4": "NORMAL",
+      "c23_5": "NORMAL"
+     },
+     "display": "PRN1 の機器状態は正常"
+    }
+   ],
+   "optimal": [
+    "ae4"
+   ],
+   "explanation": {
+    "evidence_chain": [
+     "ae2: 同一IPに2つの MAC が対応している ＝ 同じアドレスを名乗る機器が2台いる",
+     "ae3: 名前は正常 ＝ DNS ではなくアドレスそのものの衝突",
+     "ae4: 片方は DHCP の配布ではなく固定設定だった。持ち込み端末がプリンタと同じアドレスを使っていた"
+    ],
+    "teaching": "「ときどき別の相手につながる」は ARP の世界を見る。IP が同じでも MAC は別、という対照が切り分けの芯になる。"
+   }
+  },
+  {
+   "id": "case24",
+   "level": 4,
+   "title": "一部の相手にだけ届かない",
+   "budget": 7,
+   "symptom": "PC1 から、同じ建屋の一部の端末にだけ届かない。サーバには届く。PC1 は最近、設定変更があった。",
+   "topology": {
+    "nodes": [
+     {
+      "id": "PC1",
+      "x": 10,
+      "y": 30
+     },
+     {
+      "id": "SW1",
+      "x": 30,
+      "y": 30
+     },
+     {
+      "id": "PC2",
+      "x": 56,
+      "y": 16
+     },
+     {
+      "id": "SRV1",
+      "x": 56,
+      "y": 46
+     },
+     {
+      "id": "R1",
+      "x": 80,
+      "y": 30
+     }
+    ],
+    "edges": [
+     [
+      "PC1",
+      "SW1"
+     ],
+     [
+      "SW1",
+      "PC2"
+     ],
+     [
+      "SW1",
+      "SRV1"
+     ],
+     [
+      "SW1",
+      "R1"
+     ]
+    ]
+   },
+   "candidates": [
+    {
+     "id": "c24_1",
+     "label": "PC1 のサブネットマスク誤設定",
+     "answer": true
+    },
+    {
+     "id": "c24_2",
+     "label": "PC2 側のファイアウォールが遮断"
+    },
+    {
+     "id": "c24_3",
+     "label": "SW1 の VLAN 分離（PC2 のポートが別 VLAN）"
+    },
+    {
+     "id": "c24_4",
+     "label": "R1 の ACL が一部を遮断"
+    },
+    {
+     "id": "c24_5",
+     "label": "PC2 のデフォルトゲートウェイ誤り（帰りが来ない）"
+    }
+   ],
+   "observations": [
+    {
+     "id": "af1",
+     "tool": "ping",
+     "label": "ping PC1→PC2",
+     "cost": 1,
+     "results": {
+      "c24_1": "FAIL",
+      "c24_2": "FAIL",
+      "c24_3": "FAIL",
+      "c24_4": "FAIL",
+      "c24_5": "FAIL"
+     },
+     "display": "応答なし"
+    },
+    {
+     "id": "af2",
+     "tool": "ping",
+     "label": "ping PC1→SRV1",
+     "cost": 1,
+     "results": {
+      "c24_1": "OK",
+      "c24_2": "OK",
+      "c24_3": "OK",
+      "c24_4": "OK",
+      "c24_5": "OK"
+     },
+     "display": "応答あり"
+    },
+    {
+     "id": "af3",
+     "tool": "ping",
+     "label": "ping PC2→PC1（逆向き）",
+     "cost": 1,
+     "results": {
+      "c24_1": "OK",
+      "c24_2": "OK",
+      "c24_3": "FAIL",
+      "c24_4": "FAIL",
+      "c24_5": "FAIL"
+     },
+     "display": "PC2 からは届く"
+    },
+    {
+     "id": "af4",
+     "tool": "snmp",
+     "label": "端末設定の詳細確認（PC1 のアドレスとマスク）",
+     "cost": 2,
+     "results": {
+      "c24_1": "MASK_WRONG",
+      "c24_2": "NORMAL",
+      "c24_3": "NORMAL",
+      "c24_4": "NORMAL",
+      "c24_5": "NORMAL"
+     },
+     "display": "PC1 のマスクが /25 になっている（正しくは /24）"
+    },
+    {
+     "id": "af5",
+     "tool": "snmp",
+     "label": "SNMP SW1（ポートの VLAN）",
+     "cost": 1,
+     "results": {
+      "c24_1": "NORMAL",
+      "c24_2": "NORMAL",
+      "c24_3": "VLAN_DIFF",
+      "c24_4": "NORMAL",
+      "c24_5": "NORMAL"
+     },
+     "display": "ポートの VLAN は同一"
+    },
+    {
+     "id": "af6",
+     "tool": "log",
+     "label": "R1 ログ（ACL）",
+     "cost": 2,
+     "results": {
+      "c24_1": "NONE",
+      "c24_2": "NONE",
+      "c24_3": "NONE",
+      "c24_4": "ACL_DENY_LOG",
+      "c24_5": "NONE"
+     },
+     "display": "該当ログなし"
+    },
+    {
+     "id": "af7",
+     "tool": "tcp",
+     "label": "TCP疎通 PC1→PC2",
+     "cost": 1,
+     "results": {
+      "c24_1": "TIMEOUT",
+      "c24_2": "REFUSED",
+      "c24_3": "TIMEOUT",
+      "c24_4": "TIMEOUT",
+      "c24_5": "TIMEOUT"
+     },
+     "display": "タイムアウト（能動的な拒否ではない）"
+    }
+   ],
+   "optimal": [
+    "af4"
+   ],
+   "explanation": {
+    "evidence_chain": [
+     "af3: 逆向きは届く ＝ 経路の断絶ではなく、PC1 の「近い／遠い」の判断がおかしい",
+     "af7: 拒否ではなくタイムアウト ＝ 相手の FW が弾いているのではない",
+     "af4: PC1 のマスクが /25 になっていた。同一セグメントの一部を「遠い」と誤認し、届かなくなっていた"
+    ],
+    "teaching": "「近い相手にだけ届かない」はマスクを疑う。端末が同一セグメントだと思う範囲そのものが、切り分けの線になる。"
+   }
+  },
+  {
+   "id": "case25",
+   "level": 6,
+   "title": "じわじわ遅くなる",
+   "budget": 6,
+   "symptom": "SRV1 が、再起動直後は速いのに数日かけてだんだん遅くなる。再起動すると直る。特定の時間帯ではない。",
+   "topology": {
+    "nodes": [
+     {
+      "id": "PC1",
+      "x": 12,
+      "y": 30
+     },
+     {
+      "id": "SW1",
+      "x": 32,
+      "y": 30
+     },
+     {
+      "id": "R1",
+      "x": 54,
+      "y": 30
+     },
+     {
+      "id": "SRV1",
+      "x": 80,
+      "y": 30
+     }
+    ],
+    "edges": [
+     [
+      "PC1",
+      "SW1"
+     ],
+     [
+      "SW1",
+      "R1"
+     ],
+     [
+      "R1",
+      "SRV1"
+     ]
+    ]
+   },
+   "candidates": [
+    {
+     "id": "c25_1",
+     "label": "アプリのメモリリーク",
+     "answer": true
+    },
+    {
+     "id": "c25_2",
+     "label": "ディスクの容量逼迫"
+    },
+    {
+     "id": "c25_3",
+     "label": "利用者数の増加（自然な負荷増）"
+    },
+    {
+     "id": "c25_4",
+     "label": "ネットワークの輻輳"
+    },
+    {
+     "id": "c25_5",
+     "label": "バッチ処理の長時間化"
+    }
+   ],
+   "observations": [
+    {
+     "id": "ag1",
+     "tool": "snmp",
+     "label": "メモリ使用率の推移（再起動をはさんで）",
+     "cost": 2,
+     "results": {
+      "c25_1": "MONOTONIC_UP",
+      "c25_2": "NORMAL",
+      "c25_3": "USAGE_LINKED",
+      "c25_4": "NORMAL",
+      "c25_5": "NIGHT_UP"
+     },
+     "display": "メモリ使用率は再起動後に単調に増え続けている"
+    },
+    {
+     "id": "ag2",
+     "tool": "snmp",
+     "label": "SNMP SRV1（ディスクの空き）",
+     "cost": 1,
+     "results": {
+      "c25_1": "NORMAL",
+      "c25_2": "DISK_FULLISH",
+      "c25_3": "NORMAL",
+      "c25_4": "NORMAL",
+      "c25_5": "NORMAL"
+     },
+     "display": "ディスクの空きは十分"
+    },
+    {
+     "id": "ag3",
+     "tool": "snmp",
+     "label": "SNMP R1（回線使用率）",
+     "cost": 1,
+     "results": {
+      "c25_1": "NORMAL",
+      "c25_2": "NORMAL",
+      "c25_3": "NORMAL",
+      "c25_4": "SATURATED",
+      "c25_5": "NORMAL"
+     },
+     "display": "回線は飽和していない"
+    },
+    {
+     "id": "ag4",
+     "tool": "snmp",
+     "label": "利用者数の推移",
+     "cost": 1,
+     "results": {
+      "c25_1": "FLAT",
+      "c25_2": "FLAT",
+      "c25_3": "INCREASING",
+      "c25_4": "FLAT",
+      "c25_5": "FLAT"
+     },
+     "display": "利用者数は横ばい"
+    },
+    {
+     "id": "ag5",
+     "tool": "log",
+     "label": "SRV1 ログ（再起動とバッチ）",
+     "cost": 2,
+     "results": {
+      "c25_1": "REBOOT_RECOVERS",
+      "c25_2": "NONE",
+      "c25_3": "NONE",
+      "c25_4": "NONE",
+      "c25_5": "BATCH_LONGER"
+     },
+     "display": "再起動のたびに一時的に回復していた"
+    }
+   ],
+   "optimal": [
+    "ag1"
+   ],
+   "explanation": {
+    "evidence_chain": [
+     "ag4/ag3: 利用者も回線も増えていない ＝ 外からの負荷ではない",
+     "ag1: メモリは再起動を境に、単調に増え続ける。利用に連動した上下ではない",
+     "ag5: 再起動で一時回復するのが繰り返されていた。確保したメモリを解放しないアプリの欠陥だった"
+    ],
+    "teaching": "「じわじわ」は推移で見る。1時点の値ではなく、再起動をはさんだ増え方がリークの署名になる。"
+   }
+  },
+  {
+   "id": "case26",
+   "level": 5,
+   "title": "メールだけ届かない",
+   "budget": 6,
+   "symptom": "社外へのメールが、特定の宛先にだけ届かない（相手に拒否される）。受信は正常で、Web も問題ない。先月、メールサーバを移行した。",
+   "topology": {
+    "nodes": [
+     {
+      "id": "PC1",
+      "x": 10,
+      "y": 30
+     },
+     {
+      "id": "SW1",
+      "x": 30,
+      "y": 30
+     },
+     {
+      "id": "MTA1",
+      "x": 54,
+      "y": 30
+     },
+     {
+      "id": "EXT1",
+      "x": 84,
+      "y": 30
+     }
+    ],
+    "edges": [
+     [
+      "PC1",
+      "SW1"
+     ],
+     [
+      "SW1",
+      "MTA1"
+     ],
+     [
+      "MTA1",
+      "EXT1"
+     ]
+    ]
+   },
+   "candidates": [
+    {
+     "id": "c26_1",
+     "label": "SPF レコードに新しい送信サーバが含まれていない",
+     "answer": true
+    },
+    {
+     "id": "c26_2",
+     "label": "宛先側の受信ポリシー（相手の問題）"
+    },
+    {
+     "id": "c26_3",
+     "label": "自社サーバがブラックリストに掲載"
+    },
+    {
+     "id": "c26_4",
+     "label": "DKIM の署名不一致（鍵の更新漏れ）"
+    },
+    {
+     "id": "c26_5",
+     "label": "メールサーバの送信キュー詰まり"
+    }
+   ],
+   "observations": [
+    {
+     "id": "ah1",
+     "tool": "dns",
+     "label": "DNS クエリ（SPF と実際の送信元の突き合わせ）",
+     "cost": 2,
+     "results": {
+      "c26_1": "SPF_MISSING",
+      "c26_2": "SPF_OK",
+      "c26_3": "SPF_OK",
+      "c26_4": "SPF_OK",
+      "c26_5": "SPF_OK"
+     },
+     "display": "SPF レコードに、現在の送信サーバが含まれていなかった"
+    },
+    {
+     "id": "ah2",
+     "tool": "tcp",
+     "label": "バウンスメールの確認（宛先の応答）",
+     "cost": 1,
+     "results": {
+      "c26_1": "BOUNCE_REJECT",
+      "c26_2": "BOUNCE_REJECT",
+      "c26_3": "BOUNCE_REJECT",
+      "c26_4": "BOUNCE_REJECT",
+      "c26_5": "NO_BOUNCE"
+     },
+     "display": "拒否のバウンスが返ってくる"
+    },
+    {
+     "id": "ah3",
+     "tool": "dns",
+     "label": "ブラックリスト照会",
+     "cost": 1,
+     "results": {
+      "c26_1": "CLEAR",
+      "c26_2": "CLEAR",
+      "c26_3": "LISTED",
+      "c26_4": "CLEAR",
+      "c26_5": "CLEAR"
+     },
+     "display": "ブラックリストには載っていない"
+    },
+    {
+     "id": "ah4",
+     "tool": "tcp",
+     "label": "DKIM 検証テスト",
+     "cost": 1,
+     "results": {
+      "c26_1": "DKIM_OK",
+      "c26_2": "DKIM_OK",
+      "c26_3": "DKIM_OK",
+      "c26_4": "DKIM_FAIL",
+      "c26_5": "DKIM_OK"
+     },
+     "display": "DKIM の検証は通る"
+    },
+    {
+     "id": "ah5",
+     "tool": "snmp",
+     "label": "SNMP MTA1（送信キュー）",
+     "cost": 1,
+     "results": {
+      "c26_1": "NORMAL",
+      "c26_2": "NORMAL",
+      "c26_3": "NORMAL",
+      "c26_4": "NORMAL",
+      "c26_5": "QUEUE_STUCK"
+     },
+     "display": "送信キューは正常"
+    },
+    {
+     "id": "ah6",
+     "tool": "log",
+     "label": "MTA1 ログ（移行作業）",
+     "cost": 2,
+     "results": {
+      "c26_1": "MIGRATION_LOG",
+      "c26_2": "NONE",
+      "c26_3": "NONE",
+      "c26_4": "NONE",
+      "c26_5": "NONE"
+     },
+     "display": "先月、メールサーバを移行した作業記録"
+    }
+   ],
+   "optimal": [
+    "ah1"
+   ],
+   "explanation": {
+    "evidence_chain": [
+     "ah2: 宛先は能動的に拒否している ＝ 届かないのではなく、弾かれている",
+     "ah3/ah4: リスト掲載でも署名の不一致でもない",
+     "ah1/ah6: 移行後の新しい送信サーバが、SPF レコードに入っていなかった。認証できない送信元として拒否されていた"
+    ],
+    "teaching": "送信メールは「送れた」と「届いた」が別物。認証レコードと実際の送信元の突き合わせが型になる。移行後に残る設定漏れの典型。"
+   }
   }
  ],
  "note": "結果は候補ごとに定義する。検証器は (1) 全候補の署名の一意性 (2) 予算内で正解を一意化できる観測集合の存在 (3) 全ダミー候補の否定可能性 を検査する。",

@@ -147,7 +147,17 @@ const OUT_JA = { OK:'成功', FAIL:'失敗', DOWN:'down', UP:'up/up', UNREACHABL
   OLD_VERSION:'古いバージョン', LATEST:'最新版', NO_PATCH_YEAR:'1年間パッチなし',
   BRUTE_ONGOING:'総当たりが継続', CREDS_VALID:'正しい認証情報で入れる', NO_LOG:'ログ未取得',
   LOG_EXISTS:'ログ取得済み', NO_ALERT:'アラート未設定', REUSED:'使い回し（漏洩と一致）',
-  NOT_REUSED:'使い回しなし', PERIPHERAL_ONLY:'周辺記録のみ' };
+  NOT_REUSED:'使い回しなし', PERIPHERAL_ONLY:'周辺記録のみ',
+  RDP_OPEN:'RDPが応答', VPN_ONLY:'VPNのポートのみ', TEST_WEB:'テストサーバが応答',
+  FOREIGN_TRIES:'海外からの試行多数', REGISTERED:'正規の登録あり', REGISTERED_TEST:'テスト用として登録',
+  NOT_REGISTERED:'台帳に記録なし', SHARED_READABLE:'全員が読める場所', PRIVATE_FOLDER:'本人のみ',
+  CURRENT_CREDS:'現行の資格情報', OLD_CREDS:'旧パスワードのみ', ENCRYPTED:'暗号化されている',
+  MANY_READERS:'複数人が参照', SELF_ONLY:'本人のみ参照', PERSONAL_DEVICE:'個人の端末',
+  LOANER:'貸出用端末', IOT_DEVICE:'IoT機器', CORP_LAN:'業務セグメント', GUEST_NET:'ゲスト用（分離）',
+  NO_EDR:'対策ソフト未導入', INSTALLED:'対策ソフト導入済み', PW_ONLY:'パスワード認証のみ',
+  CERT_AUTH:'端末認証あり', REWRITABLE:'書き換え可能', ISOLATED_BACKUP:'隔離済み',
+  RESTORE_UNTESTED:'復旧訓練は未実施', ADMIN_CAN_DELETE:'管理者権限で削除可能',
+  DEDICATED_ONLY:'専用権限のみ' };
 const TOOL_JA = { ping:'PING', traceroute:'TRACEROUTE', dns:'DNS', snmp:'SNMP', tcp:'TCP', log:'LOG', authlog:'AUTH LOG', scan:'SCAN', config:'CONFIG', audit:'AUDIT', header:'HEADER', test:'TEST' };
 
 let cur = null, answerId = null;

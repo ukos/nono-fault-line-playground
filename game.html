@@ -125,7 +125,16 @@ const OUT_JA = { OK:'成功', FAIL:'失敗', DOWN:'down', UP:'up/up', UNREACHABL
   MASTER:'マスター状態', STALE_ARP:'古いARPを保持', CONFIG_WARN:'設定不足の警告',
   SATURATED:'使用率95%超', ERR_UP:'エラー増加', BACKUP_FLOW:'バックアップ転送が大半',
   VIDEO_FLOW:'動画系通信が大半', SLOW_DNS:'名前解決が遅い', POE_ONLY_DOWN:'落ちたのは給電機器のみ',
-  FLAP:'断続', POE_DENY_LOG:'給電不足の記録' };
+  FLAP:'断続', POE_DENY_LOG:'給電不足の記録',
+  UNSTABLE:'応答が不安定', DUP_MAC:'同一IPに2つのMAC', MAC_FLAP:'MACがポート間を移動',
+  TWO_ADDR:'2つのアドレスが返る', ONE_ADDR:'1つのアドレスのみ', DOUBLE_LEASE:'二重配布の記録',
+  NOT_LEASED:'配布記録にない', NIC_ERR:'NICエラー', MASK_WRONG:'マスク誤り', VLAN_DIFF:'別VLAN',
+  ACL_DENY_LOG:'ACLのdenyログ', MONOTONIC_UP:'単調増加', USAGE_LINKED:'利用に連動',
+  NIGHT_UP:'夜間に上昇', DISK_FULLISH:'空きわずか', INCREASING:'増加傾向', FLAT:'横ばい',
+  BATCH_LONGER:'バッチ長時間化', REBOOT_RECOVERS:'再起動で回復', SPF_MISSING:'SPFに送信元が含まれない',
+  SPF_OK:'SPFは正常', BOUNCE_REJECT:'拒否のバウンス', NO_BOUNCE:'バウンスなし（滞留）',
+  LISTED:'リスト掲載あり', CLEAR:'リスト掲載なし', DKIM_FAIL:'DKIM検証失敗', DKIM_OK:'DKIMは正常',
+  QUEUE_STUCK:'キュー滞留', MIGRATION_LOG:'移行作業の記録' };
 const TOOL_JA = { ping:'PING', traceroute:'TRACEROUTE', dns:'DNS', snmp:'SNMP', tcp:'TCP', log:'LOG' };
 
 let cur = null, answerId = null;
