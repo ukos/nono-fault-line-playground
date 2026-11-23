@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>THE CRACKER — サイドB | FAULT LINE</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<style>
+  :root{ --bg:#04070f; --panel:#0a1120; --line:#1d3355; --txt:#dfe9f5; --mut:#8fa3bd; --gr:#8ce99a; }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ margin:0; padding:0; background:var(--bg); color:var(--txt); font-family:"Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif; }
+  #screen{ max-width:640px; margin:0 auto; padding:34px 18px 44px; text-align:center; }
+  .side-label{ color:var(--gr); font-size:12px; letter-spacing:.34em; font-weight:700; }
+  h1{ font-size:42px; letter-spacing:.08em; margin:10px 0 4px; color:var(--gr); text-shadow:0 0 26px rgba(140,233,154,.35); }
+  .sub{ color:var(--mut); font-size:14px; letter-spacing:.12em; margin-bottom:28px; }
+  .card{ background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:18px; text-align:left;
+    font-size:14px; line-height:1.9; color:var(--txt); }
+  .card b{ color:var(--gr); }
+  .soon{ margin:26px 0 8px; color:var(--mut); font-size:13px; letter-spacing:.18em; }
+  #btn-back{ display:inline-block; background:transparent; color:var(--txt); border:1px solid var(--line); border-radius:12px;
+    padding:13px 30px; font-size:15px; font-weight:700; cursor:pointer; font-family:inherit; margin-top:18px; }
+  #btn-back:active{ transform:translateY(1px); }
+</style>
+</head>
+<body>
+<div id="screen">
+  <div class="side-label">SIDE B</div>
+  <h1>THE CRACKER</h1>
+  <div class="sub">ホワイトハッカー育成シナリオ</div>
+  <div class="card">
+    攻撃が成立する前に、穴を特定せよ。<br>
+    認証ログ、パケットキャプチャ、脆弱性スキャンの結果を<b>観測</b>し、
+    侵入経路と脆弱な設定の候補を<b>消去</b>して、守るべき一点を<b>特定</b>する。
+    FAULT LINE と同じ診断エンジンで学ぶ、防御側のシナリオ集。
+  </div>
+  <div class="soon">― シナリオ準備中 ―</div>
+  <button id="btn-back">◀ タイトルへ戻る</button>
+</div>
+<script>
+  document.getElementById('btn-back').onclick = () => location.href = 'index.html';
+</script>
+</body>
+</html>
