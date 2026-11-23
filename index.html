@@ -8,40 +8,30 @@
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" type="image/png" href="icon-192.png">
 <style>
-  :root{ --bg:#04070f; --panel:#0a1120; --panel2:#0d1730; --line:#1d3355; --txt:#dfe9f5; --mut:#8fa3bd; --cy:#35c8ff; --am:#ffc857; }
+  :root{ --bg:#04070f; --panel:#0a1120; --panel2:#0d1730; --line:#1d3355; --txt:#dfe9f5; --mut:#8fa3bd; --cy:#35c8ff; }
   *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
   html,body{ margin:0; padding:0; background:var(--bg); color:var(--txt); font-family:"Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif; }
   #screen-title{ max-width:880px; margin:0 auto; padding:18px 14px 40px; text-align:center; }
   #screen-title img.logo{ width:min(92vw,620px); max-height:62vh; object-fit:contain; border-radius:10px; box-shadow:0 0 34px rgba(53,200,255,.25); }
-  .tagline{ color:var(--mut); font-size:13px; margin:10px 0 20px; letter-spacing:.08em; }
-  .case-btn{ display:flex; align-items:center; gap:12px; width:100%; text-align:left; margin:10px 0; padding:14px 16px;
-    background:linear-gradient(180deg,var(--panel2),var(--panel)); border:1px solid var(--line); border-radius:12px; color:var(--txt); cursor:pointer; font-family:inherit; }
-  .case-btn:active{ border-color:var(--cy); }
-  .case-btn .lv{ font-family:ui-monospace,Menlo,monospace; color:#04121f; background:var(--cy); border-radius:6px; padding:3px 8px; font-weight:700; font-size:13px; }
-  .case-btn .t{ font-size:17px; font-weight:700; }
-  .case-btn .d{ color:var(--mut); font-size:12px; margin-top:2px; }
-  .case-btn .star{ margin-left:auto; color:var(--am); font-size:18px; }
+  .tagline{ color:var(--mut); margin:16px 0 26px; text-align:center; }
+  .tagline .l1{ font-size:16px; letter-spacing:.14em; color:var(--txt); text-align:center; }
+  .tagline .l2{ font-size:13px; letter-spacing:.1em; margin-top:6px; text-align:center; }
+  #btn-start{ display:inline-block; background:var(--cy); color:#04121f; border:none; border-radius:12px;
+    padding:16px 42px; font-size:18px; font-weight:800; letter-spacing:.06em; cursor:pointer; font-family:inherit; box-shadow:0 0 22px rgba(53,200,255,.35); }
+  #btn-start:active{ transform:translateY(1px); }
 </style>
 </head>
 <body>
 <div id="screen-title">
   <img class="logo" src="logo.jpg" alt="FAULT LINE — DESTINATION: INVESTIGATION">
-  <div class="tagline">ネットワーク障害診断パズル ― 観測し、消去し、特定せよ</div>
-  <div id="case-list"></div>
+  <div class="tagline">
+    <div class="l1">ネットワーク障害診断パズル</div>
+    <div class="l2">観測し、消去し、特定せよ</div>
+  </div>
+  <button id="btn-start">▶ シナリオを選ぶ</button>
 </div>
 <script>
-  const cleared = () => { try { return JSON.parse(localStorage.getItem('faultline-cleared') || '[]'); } catch(e){ return []; } };
-  fetch('cases.json').then(r => r.json()).then(d => {
-    const done = cleared();
-    document.getElementById('case-list').innerHTML = d.cases.map(c =>
-      `<button class="case-btn" data-case="${c.id}">
-         <span class="lv">Lv.${c.level}</span>
-         <span><span class="t">${c.title}</span><div class="d">候補 ${c.candidates.length} 件 ／ 観測予算 ${c.budget}</div></span>
-         ${done.includes(c.id) ? '<span class="star">★</span>' : ''}
-       </button>`).join('');
-    document.querySelectorAll('[data-case]').forEach(b =>
-      b.onclick = () => location.href = `game.html?case=${encodeURIComponent(b.dataset.case)}`);
-  });
+  document.getElementById('btn-start').onclick = () => location.href = 'select.html';
 </script>
 </body>
 </html>

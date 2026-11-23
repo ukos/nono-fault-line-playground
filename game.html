@@ -101,7 +101,7 @@ let alive = new Set(), used = new Set(), wronged = new Set(), spent = 0, mistake
 
 const $ = s => document.querySelector(s);
 const cleared = () => { try { return JSON.parse(localStorage.getItem('faultline-cleared') || '[]'); } catch(e){ return []; } };
-const goTitle = () => location.href = 'index.html';
+const goTitle = () => location.href = 'select.html';
 
 const caseId = new URLSearchParams(location.search).get('case');
 fetch('cases.json').then(r => r.json()).then(d => {
