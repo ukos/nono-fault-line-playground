@@ -91,6 +91,7 @@
 
 <script>
 const OUT_JA = { OK:'成功', FAIL:'失敗', DOWN:'down', UP:'up/up', UNREACHABLE:'応答なし',
+  NORMAL:'正常',
   NXDOMAIN:'NXDOMAIN', ANSWER:'正常な回答', TIMEOUT:'タイムアウト', REFUSED:'REFUSED（接続拒否）',
   CONNECT_OK:'接続成功', FAIL_CONNECT:'接続失敗', STALL_AFTER_CONNECT:'接続後に応答なし',
   DENY_LOG_FOUND:'denyログあり', NONE:'該当ログなし',
@@ -281,7 +282,7 @@ function showResult(){
     <div class="score">SCORE ${score}（観測コスト ${spent} ／ 誤診 ${mistakes} 回）</div>
     <h3 style="color:var(--mut);font-size:12px;letter-spacing:.14em;margin:14px 0 4px">証拠チェーン</h3>
     <ul style="margin:0;padding-left:20px">${chain}</ul>
-    <div class="teach"><b>最小コストの手順：</b>${optimal}<br>${cur.explanation.teaching}</div>
+    <div class="teach"><b>最小コストの手順：</b>${optimal}<br>${cur.explanation.teaching}${cur.explanation.countermeasure ? `<br><b>対策：</b>${cur.explanation.countermeasure}` : ""}</div>
     <div class="row"><button class="primary" id="btn-again">もう一度</button><button id="btn-back">ケース選択へ</button></div>`;
   $('#result').classList.remove('hidden');
   renderCands();

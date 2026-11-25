@@ -91,6 +91,12 @@
 
 <script>
 const OUT_JA = { OK:'成功', FAIL:'失敗', DOWN:'down', UP:'up/up', UNREACHABLE:'応答なし',
+  SERVFAIL:'SERVFAIL', FRAG_NEEDED:'Fragmentation Needed のエラー応答', FCS_RUNT:'FCSエラーと runt の増加',
+  ASSOC_DENIED:'アソシエーションの段階で拒否', NH_UNRESOLVED:'ネクストホップの ARP 未解決', ROUTE_MISSING:'経路の欠落',
+  PTB_DENIED:'Packet Too Big の遮断記録', ERR_INTERMITTENT:'断続的にエラー', PORT_EXHAUST:'変換ポートの枯渇',
+  EXSTART:'ExStart で停止', AGGREGATE_LOG:'集約設定の変更記録', MASTER_BOTH:'両方がマスターを主張', VRID_DIFF:'VRID の不一致',
+  VIA_GW:'ゲートウェイ経由', MASK_WRONG_PC2:'PC2 のマスク誤り', NEG_CACHE:'否定応答のキャッシュあり',
+  PORT_DOWN:'ポートがダウン', FLAP_LIGHT:'光パワーが不安定', STOP_R2:'R2 で停止', NORMAL:'正常',
   NXDOMAIN:'NXDOMAIN', ANSWER:'正常な回答', TIMEOUT:'タイムアウト', REFUSED:'REFUSED（接続拒否）',
   CONNECT_OK:'接続成功', FAIL_CONNECT:'接続失敗', STALL_AFTER_CONNECT:'接続後に応答なし',
   DENY_LOG_FOUND:'denyログあり', NONE:'該当ログなし',
